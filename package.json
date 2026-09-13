@@ -1,0 +1,25 @@
+{
+  "name": "audiocollab",
+  "version": "0.1.0",
+  "scripts": {
+    "build": "webpack --config webpack.config.js --mode production",
+    "watch": "webpack --config webpack.config.js --mode development --watch"
+  },
+  "dependencies": {
+    "@nextcloud/axios": "^2.4.0",
+    "@nextcloud/router": "^2.2.0",
+    "vue": "2.7.16"
+  },
+  "devDependencies": {
+    "@nextcloud/browserslist-config": "^3.0.0",
+    "vue-loader": "15.11.1",
+    "vue-template-compiler": "2.7.16",
+    "css-loader": "^6.8.1",
+    "vue-style-loader": "^4.1.3",
+    "webpack": "^5.88.2",
+    "webpack-cli": "^5.1.4",
+    "@babel/core": "^7.22.9",
+    "@babel/preset-env": "^7.22.9",
+    "babel-loader": "^9.1.3"
+  }
+}

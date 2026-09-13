@@ -1,0 +1,9 @@
+node_modules/
+.DS_Store
+
+# Script one-off usato durante lo sviluppo, non fa parte dell'app
+backfill_loudness.php
+
+# File residui vuoti (non fanno parte dell'app)
+/audiocollab@0.1.0
+/webpack
