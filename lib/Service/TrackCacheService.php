@@ -262,25 +262,18 @@ class TrackCacheService {
 
     private function callFfmpegService(string $endpoint, string $filePath, ?string $saveTo, int $timeout = 120, array $extraFields = []): ?string {
         $curl = curl_init();
-        $boundary = uniqid();
-        $fileContent = file_get_contents($filePath);
-        $body = '';
-        foreach ($extraFields as $name => $value) {
-            $body .= "--$boundary\r\n";
-            $body .= 'Content-Disposition: form-data; name="' . $name . '"' . "\r\n\r\n";
-            $body .= $value . "\r\n";
-        }
-        $body .= "--$boundary\r\n";
-        $body .= 'Content-Disposition: form-data; name="file"; filename="' . basename($filePath) . '"' . "\r\n";
-        $body .= "Content-Type: application/octet-stream\r\n\r\n";
-        $body .= $fileContent . "\r\n";
-        $body .= "--$boundary--\r\n";
+        // CURLFile fa leggere il file a curl direttamente dal disco invece
+        // di caricarlo interamente in una stringa PHP (che poi veniva
+        // duplicata di nuovo per comporre il corpo multipart a mano): con
+        // master WAV molto grandi si rischiava di superare il memory_limit
+        // di PHP per due copie dello stesso file che non servivano.
+        $postFields = $extraFields;
+        $postFields['file'] = new \CURLFile($filePath, 'application/octet-stream', basename($filePath));
 
         curl_setopt_array($curl, [
             CURLOPT_URL => $this->ffmpegServiceUrl . $endpoint,
             CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => $body,
-            CURLOPT_HTTPHEADER => ['Content-Type: multipart/form-data; boundary=' . $boundary],
+            CURLOPT_POSTFIELDS => $postFields,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT => $timeout,
         ]);
