@@ -1439,6 +1439,11 @@ export default {
        di lasciargli spazio. */
     min-width: 0;
     accent-color: var(--ac-accent);
+    /* Il player gira dentro il Viewer nativo di Nextcloud, che su iOS
+       Safari intercetta i trascinamenti orizzontali per lo swipe tra
+       file: senza touch-action:none quel gesto può "rubare" il drag
+       dello slider invece di farlo muovere. */
+    touch-action: none;
 }
 
 .ac-volume {
@@ -1452,6 +1457,7 @@ export default {
 .ac-volume-range {
     width: 70px;
     accent-color: var(--ac-accent);
+    touch-action: none;
 }
 
 .ac-loudness-row {
