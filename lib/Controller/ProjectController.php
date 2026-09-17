@@ -141,11 +141,17 @@ class ProjectController extends Controller {
         }
 
         $userFolder = $this->rootFolder->getUserFolder($user->getUID());
-        if (empty($userFolder->getById($folderId))) {
+        $folders = $userFolder->getById($folderId);
+        if (empty($folders)) {
             // Senza questo controllo, qualunque utente autenticato potrebbe
             // riordinare le tracce di un progetto indovinando il folderId,
             // anche senza avervi accesso.
             return new JSONResponse(['error' => 'folder not found'], 404);
+        }
+        if (!$folders[0]->isUpdateable()) {
+            // Solo visibile (es. condivisione in sola lettura) non basta:
+            // riordinare le tracce è un'azione di scrittura.
+            return new JSONResponse(['error' => 'only the owner or a collaborator with write access can reorder tracks'], 403);
         }
 
         $project = $this->projectMapper->findByFolderFileId($folderId);
