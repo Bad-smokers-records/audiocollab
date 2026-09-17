@@ -7,3 +7,9 @@ backfill_loudness.php
 # File residui vuoti (non fanno parte dell'app)
 /audiocollab@0.1.0
 /webpack
+
+# Certificato/chiave privata di firma dell'App Store Nextcloud: NON va mai
+# committato. Va tenuto fuori dal repository, in un posto sicuro.
+*.key
+*.crt
+signing/

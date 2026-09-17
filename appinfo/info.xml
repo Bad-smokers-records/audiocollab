@@ -5,10 +5,15 @@
     <name>AudioCollab</name>
     <summary>Revisione collaborativa di mix audio in studio</summary>
     <description><![CDATA[Piattaforma per la revisione collaborativa di mix audio: player con waveform e commenti a timestamp (con risposte, modifica ed eliminazione), versioning automatico sincronizzato con la cronologia file di Nextcloud, confronto e bilanciamento del volume (loudness matching) tra le tracce di un progetto, simulazione dell'ascolto su Spotify/Apple Music/YouTube Music, stato di revisione per traccia (bozza/in revisione/approvato) e notifiche per i nuovi commenti.]]></description>
-    <version>0.1.46</version>
+    <version>1.0.0</version>
     <licence>agpl</licence>
     <author mail="fede.biondo@gmail.com">Bad Smokers Records</author>
     <category>multimedia</category>
+    <!-- PLACEHOLDER: sostituisci badsmokersrecords/audiocollab con il vero
+         percorso del repository una volta creato su GitHub. -->
+    <bugs>https://github.com/badsmokersrecords/audiocollab/issues</bugs>
+    <repository type="git">https://github.com/badsmokersrecords/audiocollab.git</repository>
+    <screenshot>https://raw.githubusercontent.com/badsmokersrecords/audiocollab/main/screenshots/dashboard.png</screenshot>
     <dependencies>
         <php min-version="8.1"/>
         <nextcloud min-version="27" max-version="34"/>
