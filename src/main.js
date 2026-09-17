@@ -2,6 +2,23 @@ import Vue from 'vue'
 import AudioCollabPlayer from './AudioCollabPlayer.vue'
 import ProjectView from './ProjectView.vue'
 
+// Il pulsante "AudioCollab" nella toolbar dei File è un bottone nativo di
+// Nextcloud con flex-shrink:0 e min-width:fit-content: sotto una certa
+// larghezza il testo non va mai a capo né si riduce, e finisce per
+// sovrapporsi al breadcrumb del percorso. Altri pulsanti nativi della
+// stessa toolbar diventano icona-sola su schermi stretti; replichiamo lo
+// stesso comportamento solo per il nostro, mirato tramite il suo
+// data-cy-files-list-action (stabile, non cambia tra le build).
+const mobileToolbarStyle = document.createElement('style')
+mobileToolbarStyle.textContent = `
+@media (max-width: 520px) {
+    [data-cy-files-list-action="audiocollab-open-project-toolbar"] .button-vue__text {
+        display: none;
+    }
+}
+`
+document.head.appendChild(mobileToolbarStyle)
+
 const handler = {
     id: 'audiocollab',
     group: 'media',
