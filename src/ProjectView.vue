@@ -181,11 +181,22 @@ export default {
             source.connect(this.gainNode)
             this.gainNode.connect(this.audioContext.destination)
         },
+        // Media di riferimento per il gain: esclude la traccia passata (di
+        // solito quella in riproduzione), come fa il player singolo
+        // (computeSuggestedGain lato server confronta contro le "sorelle",
+        // mai contro se stessa). Includerla nella propria media di
+        // riferimento dimezzerebbe la correzione in progetti con poche tracce.
+        averageLoudnessExcluding(fileId) {
+            const list = this.tracksWithLoudness.filter(t => t.fileId !== fileId)
+            if (!list.length) return null
+            return list.reduce((sum, t) => sum + t.integratedLoudness, 0) / list.length
+        },
         applyGain() {
             if (!this.gainNode) return
             const track = this.tracks.find(t => t.fileId === this.currentTrackFileId)
-            const canApply = this.loudnessMatchEnabled && track && track.integratedLoudness !== null
-            const gainDb = canApply ? (this.averageLoudness - track.integratedLoudness) : 0
+            const target = track ? this.averageLoudnessExcluding(track.fileId) : null
+            const canApply = this.loudnessMatchEnabled && track && track.integratedLoudness !== null && target !== null
+            const gainDb = canApply ? (target - track.integratedLoudness) : 0
             this.gainNode.gain.value = Math.pow(10, gainDb / 20)
         },
         togglePlayTrack(track) {
