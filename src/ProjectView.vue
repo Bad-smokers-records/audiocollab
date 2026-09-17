@@ -41,7 +41,7 @@
                         @dragover.prevent
                         @dragenter.prevent="onDragEnter(index)"
                         @drop="onDrop(index)"
-                        @dragend="draggedIndex = null"
+                        @dragend="onDragEnd"
                     >
                         <span class="ac-track-handle" title="Trascina per riordinare">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>
@@ -103,6 +103,8 @@ export default {
             isPlaying: false,
             loudnessMatchEnabled: false,
             draggedIndex: null,
+            dragStartOrder: null,
+            dropHandled: false,
             audioContext: null,
             gainNode: null,
         }
@@ -218,6 +220,8 @@ export default {
         },
         onDragStart(index) {
             this.draggedIndex = index
+            this.dragStartOrder = this.tracks.map(t => t.fileId)
+            this.dropHandled = false
         },
         onDragEnter(index) {
             if (this.draggedIndex === null || this.draggedIndex === index) return
@@ -226,6 +230,7 @@ export default {
             this.draggedIndex = index
         },
         async onDrop() {
+            this.dropHandled = true
             this.draggedIndex = null
             try {
                 await axios.post(generateUrl('/apps/audiocollab/api/project/reorder'), {
@@ -235,6 +240,19 @@ export default {
             } catch (e) {
                 console.error('AudioCollab: errore salvataggio ordine', e)
             }
+        },
+        onDragEnd() {
+            // Se il drag finisce senza un drop su una riga valida (es.
+            // rilasciato fuori dalla lista), l'ordine locale è già stato
+            // cambiato in anteprima da onDragEnter ma mai salvato: lo
+            // ripristiniamo com'era prima di iniziare a trascinare, invece
+            // di lasciare la vista disallineata rispetto al server.
+            if (!this.dropHandled && this.dragStartOrder) {
+                const byId = new Map(this.tracks.map(t => [t.fileId, t]))
+                this.tracks = this.dragStartOrder.map(fileId => byId.get(fileId)).filter(Boolean)
+            }
+            this.draggedIndex = null
+            this.dragStartOrder = null
         },
         onKeydown(e) {
             if (e.key === 'Escape') this.close()
