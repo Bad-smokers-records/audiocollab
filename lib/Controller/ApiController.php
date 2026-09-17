@@ -192,6 +192,19 @@ class ApiController extends Controller {
             return new JSONResponse(['error' => 'file not found'], 404);
         }
 
+        // Il contenuto per questo fileid+version è immutabile (una nuova
+        // versione ha sempre un id diverso), quindi l'etag può essere fisso
+        // e la cache del browser tenuta a lungo: senza questo, riavvolgere o
+        // riaprire la stessa traccia riscarica sempre gli stessi byte dalla NAS.
+        $etag = '"ac-v' . $trackVersion->getId() . '"';
+        $ifNoneMatch = $this->request->getHeader('If-None-Match');
+        if ($ifNoneMatch !== '' && trim($ifNoneMatch) === $etag) {
+            $notModified = new Response(Http::STATUS_NOT_MODIFIED);
+            $notModified->addHeader('ETag', $etag);
+            $notModified->addHeader('Cache-Control', 'private, max-age=31536000, immutable');
+            return $notModified;
+        }
+
         $size = filesize($path);
         $start = 0;
         $end = $size - 1;
@@ -226,6 +239,8 @@ class ApiController extends Controller {
         $response->addHeader('Content-Type', 'audio/mpeg');
         $response->addHeader('Accept-Ranges', 'bytes');
         $response->addHeader('Content-Length', (string)$length);
+        $response->addHeader('Cache-Control', 'private, max-age=31536000, immutable');
+        $response->addHeader('ETag', $etag);
         if ($status === Http::STATUS_PARTIAL_CONTENT) {
             $response->addHeader('Content-Range', 'bytes ' . $start . '-' . $end . '/' . $size);
         }
@@ -534,7 +549,7 @@ class ApiController extends Controller {
         }
 
         $parent = $file->getParent();
-        $siblingValues = [];
+        $siblingIds = [];
         foreach ($parent->getDirectoryListing() as $sibling) {
             if ($sibling->getId() === $file->getId()) {
                 continue;
@@ -542,8 +557,19 @@ class ApiController extends Controller {
             if ($sibling->getMimePart() !== 'audio') {
                 continue;
             }
-            $siblingVersion = $this->versionMapper->findLatestByFileId($sibling->getId());
-            if ($siblingVersion !== null && $siblingVersion->getIntegratedLoudness() !== null) {
+            $siblingIds[] = $sibling->getId();
+        }
+
+        if (empty($siblingIds)) {
+            return null;
+        }
+
+        // Una sola query per tutte le sorelle invece di una per traccia:
+        // con una cartella da N tracce, aprirne una faceva N-1 query solo
+        // per questo confronto.
+        $siblingValues = [];
+        foreach ($this->versionMapper->findLatestForFileIds($siblingIds) as $siblingVersion) {
+            if ($siblingVersion->getIntegratedLoudness() !== null) {
                 $siblingValues[] = $siblingVersion->getIntegratedLoudness();
             }
         }

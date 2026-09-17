@@ -93,6 +93,36 @@ class TrackVersionMapper extends QBMapper {
     }
 
     /**
+     * L'ultima versione per ciascuno dei file_id indicati, in una sola query
+     * invece di una per file (usato per il confronto loudness tra le tracce
+     * di un progetto, che altrimenti farebbe N query per N tracce sorelle).
+     *
+     * @param int[] $fileIds
+     * @return array<int, TrackVersion> chiave: file_id
+     */
+    public function findLatestForFileIds(array $fileIds): array {
+        if (empty($fileIds)) {
+            return [];
+        }
+        $qb = $this->db->getQueryBuilder();
+        $qb->select('*')
+            ->from('audiocollab_versions')
+            ->where($qb->expr()->in('file_id', $qb->createNamedParameter($fileIds, IQueryBuilder::PARAM_INT_ARRAY)))
+            ->orderBy('file_id', 'ASC')
+            ->addOrderBy('version_number', 'DESC');
+
+        $latestByFileId = [];
+        foreach ($this->findEntities($qb) as $row) {
+            if (!isset($latestByFileId[$row->getFileId()])) {
+                // Righe ordinate per file_id, version_number DESC: la prima
+                // occorrenza per file è già la più recente.
+                $latestByFileId[$row->getFileId()] = $row;
+            }
+        }
+        return $latestByFileId;
+    }
+
+    /**
      * @param int[] $ids
      * @return TrackVersion[]
      */
