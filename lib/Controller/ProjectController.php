@@ -6,6 +6,7 @@ use OCA\Audiocollab\Db\ProjectMapper;
 use OCA\Audiocollab\Db\Track;
 use OCA\Audiocollab\Db\TrackMapper;
 use OCA\Audiocollab\Db\TrackVersionMapper;
+use OCA\Audiocollab\Service\TrackCacheService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
@@ -24,6 +25,7 @@ class ProjectController extends Controller {
     private $trackMapper;
     private $versionMapper;
     private $urlGenerator;
+    private $cacheService;
 
     public function __construct(
         string $appName,
@@ -33,7 +35,8 @@ class ProjectController extends Controller {
         ProjectMapper $projectMapper,
         TrackMapper $trackMapper,
         TrackVersionMapper $versionMapper,
-        IURLGenerator $urlGenerator
+        IURLGenerator $urlGenerator,
+        TrackCacheService $cacheService
     ) {
         parent::__construct($appName, $request);
         $this->rootFolder = $rootFolder;
@@ -42,6 +45,7 @@ class ProjectController extends Controller {
         $this->trackMapper = $trackMapper;
         $this->versionMapper = $versionMapper;
         $this->urlGenerator = $urlGenerator;
+        $this->cacheService = $cacheService;
     }
 
     #[NoAdminRequired]
@@ -101,22 +105,27 @@ class ProjectController extends Controller {
         $tracksArray = [];
         foreach ($audioFiles as $file) {
             $track = $trackByFileId[$file->getId()];
-            $version = $this->versionMapper->findLatestByFileId($file->getId());
+            // Come il player (ApiController::getTrack), non ci limitiamo a
+            // leggere l'ultima versione nota dal DB: verifichiamo che
+            // corrisponda al contenuto attuale del file. Senza questo, se un
+            // file viene sovrascritto e il job in background non ha ancora
+            // girato, questa vista mostrerebbe uno stato/loudness/URL
+            // superati rispetto a quanto mostra il player per la stessa
+            // traccia (bug segnalato: stato non coerente tra le due viste).
+            $version = $this->cacheService->ensureVersionForCurrentContent($file->getId(), $file, $user);
             $tracksArray[] = [
                 'fileId' => $file->getId(),
                 'trackId' => $track->getId(),
-                'name' => ($version !== null && ($version->getTitleOverride() || $version->getExtractedTitle()))
+                'name' => ($version->getTitleOverride() || $version->getExtractedTitle())
                     ? ($version->getTitleOverride() ?: $version->getExtractedTitle())
                     : pathinfo($file->getName(), PATHINFO_FILENAME),
                 'sortOrder' => $track->getSortOrder(),
                 'sizeBytes' => $file->getSize(),
-                'streamUrl' => $version !== null
-                    ? $this->urlGenerator->linkToRoute('audiocollab.api.stream', ['fileid' => $file->getId()]) . '?version=' . $version->getId()
-                    : null,
-                'integratedLoudness' => $version !== null ? $version->getIntegratedLoudness() : null,
-                'loudnessRange' => $version !== null ? $version->getLoudnessRange() : null,
-                'truePeak' => $version !== null ? $version->getTruePeak() : null,
-                'status' => $version !== null ? $version->getStatus() : null,
+                'streamUrl' => $this->urlGenerator->linkToRoute('audiocollab.api.stream', ['fileid' => $file->getId()]) . '?version=' . $version->getId(),
+                'integratedLoudness' => $version->getIntegratedLoudness(),
+                'loudnessRange' => $version->getLoudnessRange(),
+                'truePeak' => $version->getTruePeak(),
+                'status' => $version->getStatus(),
             ];
         }
 
