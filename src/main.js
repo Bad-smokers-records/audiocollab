@@ -11,6 +11,12 @@ const handler = {
         'audio/x-flac',
         'audio/wav',
         'audio/x-wav',
+        // .m4a: già gestiti da NodeWrittenListener (mimePart === 'audio') e
+        // da ProjectController per la cache/il confronto tracce, ma senza
+        // questi due mimetype il Viewer non apriva mai AudioCollab per
+        // questi file quando ci si clicca sopra nei File.
+        'audio/mp4',
+        'audio/x-m4a',
     ],
     component: AudioCollabPlayer,
 }
