@@ -52,19 +52,31 @@ function waitForViewerAndRegister(attemptsLeft) {
 
 waitForViewerAndRegister(60)
 
+let openProjectViewInstance = null
+
+function closeProjectView() {
+    if (!openProjectViewInstance) return
+    const instance = openProjectViewInstance
+    openProjectViewInstance = null
+    instance.$destroy()
+    if (instance.$el && instance.$el.parentNode) {
+        instance.$el.parentNode.removeChild(instance.$el)
+    }
+}
+
 function openProjectView(folderId) {
+    // Senza questo, cliccare due volte velocemente sull'azione "AudioCollab"
+    // di una cartella (o su due cartelle diverse in sequenza) montava più
+    // modali sovrapposte contemporaneamente.
+    closeProjectView()
+
     const mountEl = document.createElement('div')
     document.body.appendChild(mountEl)
-    const instance = new Vue({
+    openProjectViewInstance = new Vue({
         render: (h) => h(ProjectView, {
             props: { folderId },
             on: {
-                close: () => {
-                    instance.$destroy()
-                    if (instance.$el && instance.$el.parentNode) {
-                        instance.$el.parentNode.removeChild(instance.$el)
-                    }
-                },
+                close: closeProjectView,
             },
         }),
     }).$mount(mountEl)
