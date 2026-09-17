@@ -161,15 +161,26 @@
                         step="0.01"
                         :value="seekDisplayValue"
                         @mousedown="onSeekStart"
-                        @touchstart="onSeekStart"
+                        @touchstart.stop="onSeekStart"
+                        @touchmove.stop
                         @input="onSeekInput"
                         @mouseup="onSeekEnd"
-                        @touchend="onSeekEnd"
+                        @touchend.stop="onSeekEnd"
                         @change="onSeekEnd"
                     />
                     <div class="ac-volume">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3 10v4h4l5 5V5L7 10H3z"/></svg>
-                        <input type="range" class="ac-volume-range" min="0" max="1" step="0.01" v-model.number="volume" />
+                        <input
+                            type="range"
+                            class="ac-volume-range"
+                            min="0"
+                            max="1"
+                            step="0.01"
+                            v-model.number="volume"
+                            @touchstart.stop
+                            @touchmove.stop
+                            @touchend.stop
+                        />
                     </div>
                 </div>
 
@@ -524,6 +535,11 @@ export default {
             if (this.$refs.audioEl) {
                 this.$refs.audioEl.volume = value
             }
+            // Su iOS Safari HTMLMediaElement.volume viene ignorato (WebKit
+            // non permette di cambiare il volume via JS, solo con i tasti
+            // fisici): applichiamo il volume anche via GainNode, l'unico
+            // modo che funziona davvero su iPhone.
+            this.applyGain()
         },
         loudnessMatchEnabled(value) {
             if (value) {
@@ -699,7 +715,11 @@ export default {
             } else if (this.loudnessMatchEnabled && this.loudnessMatch) {
                 gainDb = this.loudnessMatch.gainDb
             }
-            this.gainNode.gain.value = Math.pow(10, gainDb / 20)
+            // this.volume (0-1, dal cursore volume) moltiplica il gain di
+            // correzione invece di passare solo per audioEl.volume: su iOS
+            // quest'ultimo viene ignorato da WebKit, quindi senza questo il
+            // cursore del volume non avrebbe alcun effetto su iPhone.
+            this.gainNode.gain.value = this.volume * Math.pow(10, gainDb / 20)
         },
         skip(seconds) {
             const el = this.$refs.audioEl
@@ -721,6 +741,7 @@ export default {
             this.isSeeking = false
         },
         seekTo(seconds) {
+            this.ensureAudioGraph()
             this.$refs.audioEl.currentTime = seconds
             this.currentTime = seconds
             this.$refs.audioEl.play()
