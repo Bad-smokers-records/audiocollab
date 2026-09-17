@@ -199,11 +199,18 @@ class ApiController extends Controller {
 
         $rangeHeader = $this->request->getHeader('Range');
         if ($rangeHeader && preg_match('/bytes=(\d*)-(\d*)/', $rangeHeader, $matches)) {
-            if ($matches[1] !== '') {
-                $start = (int)$matches[1];
-            }
-            if ($matches[2] !== '') {
-                $end = min((int)$matches[2], $size - 1);
+            if ($matches[1] === '' && $matches[2] !== '') {
+                // Forma "suffisso" (es. "bytes=-500"): gli ultimi N byte del
+                // file, non un offset di fine assoluto.
+                $suffixLength = min((int)$matches[2], $size);
+                $start = $size - $suffixLength;
+            } else {
+                if ($matches[1] !== '') {
+                    $start = (int)$matches[1];
+                }
+                if ($matches[2] !== '') {
+                    $end = min((int)$matches[2], $size - 1);
+                }
             }
             if ($start > $end || $start >= $size) {
                 $invalid = new JSONResponse([], Http::STATUS_REQUEST_RANGE_NOT_SATISFIABLE);
