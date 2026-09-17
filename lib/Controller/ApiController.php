@@ -232,6 +232,13 @@ class ApiController extends Controller {
         if (!$user) {
             return new JSONResponse(['error' => 'not authenticated'], 401);
         }
+        $userFolder = $this->rootFolder->getUserFolder($user->getUID());
+        if (empty($userFolder->getById($fileid))) {
+            // Senza questo controllo, qualunque utente autenticato potrebbe
+            // scrivere commenti su un file indovinando/iterando il fileid,
+            // aggirando completamente la condivisione di Nextcloud.
+            return new JSONResponse(['error' => 'file not found'], 404);
+        }
 
         $version = $version_id !== null
             ? $this->versionMapper->findByIdForFile($version_id, $fileid)
