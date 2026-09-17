@@ -143,6 +143,17 @@ export default {
 <style scoped>
 @import './shared-theme.css';
 
+/* Stesso bug già corretto nel player: elementi con padding sotto il
+   box-sizing di default (content-box) che ricevono una larghezza dal
+   layout del genitore si rendono più larghi del previsto, e l'eccedenza
+   viene tagliata in silenzio invece di andare a capo o restringersi. */
+.audiocollab-dashboard,
+.audiocollab-dashboard *,
+.audiocollab-dashboard *::before,
+.audiocollab-dashboard *::after {
+    box-sizing: border-box;
+}
+
 .audiocollab-dashboard {
     width: 100%;
     max-width: 980px;
@@ -151,6 +162,14 @@ export default {
     box-sizing: border-box;
     color: var(--ac-text);
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    /* Il contenitore che Nextcloud usa per le pagine standalone delle app
+       (".app-audiocollab") è a altezza fissa con overflow-y:clip, non
+       scroll: si aspetta che sia il contenuto dell'app stesso a scorrere.
+       Senza questo, su schermi piccoli tutto sotto la prima schermata
+       (inclusa l'intera colonna "Commenti recenti") è irraggiungibile. */
+    height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .ac-header {

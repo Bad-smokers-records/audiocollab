@@ -46,6 +46,22 @@
                         <span class="ac-track-handle" title="Trascina per riordinare">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>
                         </span>
+                        <div class="ac-track-reorder-buttons">
+                            <button
+                                type="button"
+                                class="ac-track-reorder-btn"
+                                :disabled="index === 0"
+                                title="Sposta su"
+                                @click="moveTrack(index, -1)"
+                            >▲</button>
+                            <button
+                                type="button"
+                                class="ac-track-reorder-btn"
+                                :disabled="index === tracks.length - 1"
+                                title="Sposta giù"
+                                @click="moveTrack(index, 1)"
+                            >▼</button>
+                        </div>
                         <span class="ac-track-number">{{ index + 1 }}</span>
                         <button
                             class="ac-track-play"
@@ -57,15 +73,17 @@
                             <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
                         </button>
                         <span class="ac-track-name">{{ track.name }}</span>
-                        <span v-if="features.trackStatus && track.status" class="ac-status-badge" :class="'ac-status-badge-' + track.status">
-                            {{ statusLabel(track.status) }}
-                        </span>
-                        <template v-if="features.loudnessMatching">
-                            <span v-if="track.integratedLoudness !== null" class="ac-loudness-badge" :class="loudnessBadgeClass(track)">
-                                {{ track.integratedLoudness.toFixed(1) }} LUFS
+                        <div class="ac-track-meta">
+                            <span v-if="features.trackStatus && track.status" class="ac-status-badge" :class="'ac-status-badge-' + track.status">
+                                {{ statusLabel(track.status) }}
                             </span>
-                            <span v-else class="ac-loudness-badge ac-loudness-badge-unknown">n/d</span>
-                        </template>
+                            <template v-if="features.loudnessMatching">
+                                <span v-if="track.integratedLoudness !== null" class="ac-loudness-badge" :class="loudnessBadgeClass(track)">
+                                    {{ track.integratedLoudness.toFixed(1) }} LUFS
+                                </span>
+                                <span v-else class="ac-loudness-badge ac-loudness-badge-unknown">n/d</span>
+                            </template>
+                        </div>
                     </div>
                 </div>
 
@@ -232,14 +250,7 @@ export default {
         async onDrop() {
             this.dropHandled = true
             this.draggedIndex = null
-            try {
-                await axios.post(generateUrl('/apps/audiocollab/api/project/reorder'), {
-                    folderId: this.folderId,
-                    order: this.tracks.map(t => t.fileId),
-                })
-            } catch (e) {
-                console.error('AudioCollab: errore salvataggio ordine', e)
-            }
+            await this.persistOrder()
         },
         onDragEnd() {
             // Se il drag finisce senza un drop su una riga valida (es.
@@ -259,6 +270,28 @@ export default {
         },
         close() {
             this.$emit('close')
+        },
+        // Alternativa al trascinamento per il riordino, pensata per il
+        // tocco: il drag-and-drop nativo HTML5 (draggable/dragstart/drop)
+        // non genera eventi da input touch su iOS Safari, quindi su
+        // iPhone/iPad il trascinamento della riga non ha alcun effetto.
+        // Le frecce chiamano la stessa identica logica di persistenza.
+        moveTrack(index, direction) {
+            const target = index + direction
+            if (target < 0 || target >= this.tracks.length) return
+            const moved = this.tracks.splice(index, 1)[0]
+            this.tracks.splice(target, 0, moved)
+            this.persistOrder()
+        },
+        async persistOrder() {
+            try {
+                await axios.post(generateUrl('/apps/audiocollab/api/project/reorder'), {
+                    folderId: this.folderId,
+                    order: this.tracks.map(t => t.fileId),
+                })
+            } catch (e) {
+                console.error('AudioCollab: errore salvataggio ordine', e)
+            }
         },
     },
 }
@@ -413,6 +446,38 @@ export default {
     display: flex;
 }
 
+.ac-track-reorder-buttons {
+    display: none;
+    flex-direction: column;
+    flex-shrink: 0;
+}
+
+.ac-track-reorder-btn {
+    width: 22px;
+    height: 18px;
+    min-width: 0;
+    min-height: 0;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--ac-text-faint);
+    font-size: 9px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.ac-track-reorder-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.ac-track-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
 .ac-track-number {
     flex-shrink: 0;
     width: 20px;
@@ -503,5 +568,30 @@ export default {
 .ac-status-badge-approved {
     background: #e5f7ec;
     color: #2ea364;
+}
+
+@media (max-width: 480px) {
+    /* Il nome traccia si riduceva a pochi caratteri visibili: stato e
+       loudness vanno su una riga propria sotto, lasciando al nome tutta
+       la larghezza rimasta dopo maniglia/numero/play. */
+    .ac-track-handle {
+        display: none;
+    }
+
+    .ac-track-reorder-buttons {
+        display: flex;
+    }
+
+    .ac-track-row {
+        flex-wrap: wrap;
+        cursor: default;
+    }
+
+    .ac-track-meta {
+        order: 1;
+        flex-basis: 100%;
+        justify-content: flex-end;
+        margin-top: 2px;
+    }
 }
 </style>
