@@ -236,6 +236,8 @@ export default {
 </script>
 
 <style scoped>
+@import './shared-theme.css';
+
 .ac-project-overlay {
     position: fixed;
     inset: 0;
@@ -251,7 +253,7 @@ export default {
     max-height: 80vh;
     display: flex;
     flex-direction: column;
-    background: #fff;
+    background: var(--ac-surface);
     border-radius: 16px;
     overflow: hidden;
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
@@ -298,7 +300,7 @@ export default {
 .ac-project-loading {
     padding: 40px;
     text-align: center;
-    color: #6b7480;
+    color: var(--ac-text-dim);
 }
 
 .ac-project-toolbar {
@@ -306,12 +308,12 @@ export default {
     align-items: center;
     gap: 10px;
     padding: 12px 20px;
-    border-bottom: 1px solid #e3e7ec;
+    border-bottom: 1px solid var(--ac-border);
 }
 
 .ac-project-toolbar-label {
     font-size: 12px;
-    color: #1d2129;
+    color: var(--ac-text);
     font-weight: 600;
 }
 
@@ -325,13 +327,13 @@ export default {
     padding: 0;
     border: none;
     border-radius: 999px;
-    background: #e3e7ec;
+    background: var(--ac-border);
     cursor: pointer;
     transition: background 0.15s ease;
 }
 
 .ac-toggle-switch.ac-toggle-switch-on {
-    background: #0f7fd1 !important;
+    background: var(--ac-accent) !important;
 }
 
 .ac-toggle-knob {
@@ -365,7 +367,7 @@ export default {
 }
 
 .ac-track-row:hover {
-    background: #f5f7fa;
+    background: var(--ac-bg);
 }
 
 .ac-track-row-dragging {
@@ -373,12 +375,12 @@ export default {
 }
 
 .ac-track-row-active {
-    background: #e6f2fb;
+    background: var(--ac-accent-soft);
 }
 
 .ac-track-handle {
     flex-shrink: 0;
-    color: #9aa3ad;
+    color: var(--ac-text-faint);
     display: flex;
 }
 
@@ -387,7 +389,7 @@ export default {
     width: 20px;
     font-size: 12px;
     font-weight: 700;
-    color: #9aa3ad;
+    color: var(--ac-text-faint);
     text-align: right;
 }
 
@@ -400,7 +402,7 @@ export default {
     padding: 0;
     border-radius: 50%;
     border: none;
-    background: #0f7fd1;
+    background: var(--ac-accent);
     color: #fff;
     display: flex;
     align-items: center;
@@ -417,7 +419,7 @@ export default {
     flex: 1;
     min-width: 0;
     font-size: 13px;
-    color: #1d2129;
+    color: var(--ac-text);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

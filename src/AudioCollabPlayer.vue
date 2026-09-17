@@ -876,33 +876,35 @@ export default {
 </script>
 
 <style scoped>
-.audiocollab-player {
-    --ac-bg: #f5f7fa;
-    --ac-surface: #ffffff;
-    --ac-border: #e3e7ec;
-    --ac-text: #1d2129;
-    --ac-text-dim: #6b7480;
-    --ac-text-faint: #9aa3ad;
-    --ac-accent: #0f7fd1;
-    --ac-accent-dark: #0b63a6;
-    --ac-accent-soft: #e6f2fb;
-    --ac-marker: #f5a623;
-    --ac-status-open-bg: #e6f2fb;
-    --ac-status-open-text: #0f7fd1;
-    --ac-status-resolved-bg: #e5f7ec;
-    --ac-status-resolved-text: #2ea364;
-    --ac-radius: 12px;
-    --ac-radius-sm: 8px;
+@import './shared-theme.css';
 
+/* Senza questo reset, gli elementi con padding e box-sizing:content-box
+   (default del browser) che ricevono "width: 100%" nei breakpoint qui sotto
+   (es. .ac-waveform-card, .ac-comments-section) si rendono più larghi del
+   contenitore della loro stessa padding, e l'eccedenza viene tagliata in
+   silenzio dall'overflow-x:hidden qui sotto invece di andare a capo. */
+.audiocollab-player,
+.audiocollab-player *,
+.audiocollab-player *::before,
+.audiocollab-player *::after {
+    box-sizing: border-box;
+}
+
+.audiocollab-player {
     width: 100%;
     max-width: 980px;
     margin: 0 auto;
     padding: 32px 14px 14px;
     background: var(--ac-bg);
-    box-sizing: border-box;
     color: var(--ac-text);
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     overflow-x: hidden;
+    /* Il Viewer nativo di Nextcloud mette il file in un contenitore flex
+       con align-items:center: va bene per immagini/video che stanno dentro
+       il riquadro, ma il nostro player è più alto del riquadro disponibile
+       su mobile, e centrarlo verticalmente lo taglia a metà sopra e sotto
+       in modo non recuperabile con lo scroll. Ci ancoriamo in alto. */
+    align-self: flex-start;
 }
 
 .audiocollab-player audio {
@@ -910,27 +912,6 @@ export default {
        transport custom): senza questa regola, iOS Safari può renderizzare
        comunque una propria UI nativa al posto dei nostri controlli. */
     display: none;
-}
-
-.ac-loading {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 40px 0;
-    color: var(--ac-text-dim);
-}
-
-.ac-spinner {
-    width: 18px;
-    height: 18px;
-    border: 2px solid var(--ac-border);
-    border-top-color: var(--ac-accent);
-    border-radius: 50%;
-    animation: ac-spin 0.8s linear infinite;
-}
-
-@keyframes ac-spin {
-    to { transform: rotate(360deg); }
 }
 
 .ac-header {
@@ -1427,6 +1408,11 @@ export default {
 
 .ac-seek-range {
     flex: 1;
+    /* Senza min-width:0 un <input type="range"> in un contenitore flex non
+       si restringe sotto la sua larghezza intrinseca (~UA default): a
+       finestra stretta spinge il controllo volume fuori dalla riga invece
+       di lasciargli spazio. */
+    min-width: 0;
     accent-color: var(--ac-accent);
 }
 
@@ -1955,11 +1941,18 @@ export default {
     }
 
     .ac-header-display {
-        flex-wrap: wrap;
+        /* Con flex-wrap semplice, .ac-header-text può restringersi fino a
+           quasi 0 (min-width:0 + titolo con ellipsis) e la riga "sta" tutta
+           su una linea sola: il titolo si riduce a una sola lettera mentre
+           i badge (versione/stato/qualità) restano larghi. Passando a
+           colonna, testo e badge hanno sempre ciascuno la riga intera. */
+        flex-direction: column;
+        align-items: stretch;
     }
 
     .ac-header-side {
         flex-wrap: wrap;
+        margin-top: 8px;
     }
 
     .ac-cover {
@@ -2019,7 +2012,20 @@ export default {
     }
 
     .ac-volume {
-        display: none;
+        /* Sotto i 520px non c'è spazio per stare sulla prima riga insieme
+           a play/skip/tempo senza schiacciare la barra di avanzamento:
+           la mettiamo su una riga propria, con lo slider allargato per
+           un'area di tocco comoda invece dei 70px fissi da desktop. */
+        order: 2;
+        flex-basis: 100%;
+        margin-top: 2px;
+    }
+
+    .ac-volume-range {
+        flex: 1;
+        width: auto;
+        min-width: 0;
+        min-height: 28px;
     }
 
     /* Aree di tocco più generose sotto i ~520px (min. 44x44 consigliato da iOS) */

@@ -3,6 +3,8 @@ namespace OCA\Audiocollab\Controller;
 
 use OCA\Audiocollab\AppInfo\Application;
 use OCP\AppFramework\Controller;
+use OCP\AppFramework\Http\Attribute\NoAdminRequired;
+use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Services\IAppConfig;
 use OCP\IRequest;
@@ -21,10 +23,9 @@ class SettingsController extends Controller {
      * Stato delle feature attivabili/disattivabili, letto da qualunque utente
      * loggato: serve al frontend (player, vista progetto) per adattare
      * l'interfaccia in base a cosa l'amministratore ha abilitato.
-     *
-     * @NoAdminRequired
-     * @NoCSRFRequired
      */
+    #[NoAdminRequired]
+    #[NoCSRFRequired]
     public function get(): JSONResponse {
         return new JSONResponse($this->readFeatures());
     }

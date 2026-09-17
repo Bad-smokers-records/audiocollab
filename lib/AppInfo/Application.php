@@ -20,6 +20,15 @@ class Application extends App implements IBootstrap {
     public const CONFIG_COMMENT_NOTIFICATIONS = 'feature_comment_notifications';
     public const CONFIG_TRACK_STATUS = 'feature_track_status';
 
+    // Configurabili per-installazione (es. `occ config:app:set audiocollab
+    // ffmpeg_service_url --value=http://host:porta`), non hardcoded: questa
+    // installazione specifica li usa già con questi stessi valori come
+    // default, così il comportamento attuale non cambia.
+    public const CONFIG_FFMPEG_SERVICE_URL = 'ffmpeg_service_url';
+    public const DEFAULT_FFMPEG_SERVICE_URL = 'http://localhost:3100';
+    public const CONFIG_CACHE_BASE_PATH = 'cache_base_path';
+    public const DEFAULT_CACHE_BASE_PATH = '/volume1/web/nextcloud-data/appdata_audiocollab';
+
     public function __construct() {
         parent::__construct(self::APP_ID);
     }

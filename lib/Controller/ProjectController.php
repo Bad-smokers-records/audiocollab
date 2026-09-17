@@ -7,6 +7,8 @@ use OCA\Audiocollab\Db\Track;
 use OCA\Audiocollab\Db\TrackMapper;
 use OCA\Audiocollab\Db\TrackVersionMapper;
 use OCP\AppFramework\Controller;
+use OCP\AppFramework\Http\Attribute\NoAdminRequired;
+use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\Files\FileInfo;
 use OCP\Files\IRootFolder;
@@ -42,10 +44,8 @@ class ProjectController extends Controller {
         $this->urlGenerator = $urlGenerator;
     }
 
-    /**
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     */
+    #[NoAdminRequired]
+    #[NoCSRFRequired]
     public function get(int $folderId): JSONResponse {
         $user = $this->userSession->getUser();
         if (!$user) {
@@ -132,14 +132,20 @@ class ProjectController extends Controller {
         ]);
     }
 
-    /**
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     */
+    #[NoAdminRequired]
+    #[NoCSRFRequired]
     public function reorder(int $folderId, array $order): JSONResponse {
         $user = $this->userSession->getUser();
         if (!$user) {
             return new JSONResponse(['error' => 'not authenticated'], 401);
+        }
+
+        $userFolder = $this->rootFolder->getUserFolder($user->getUID());
+        if (empty($userFolder->getById($folderId))) {
+            // Senza questo controllo, qualunque utente autenticato potrebbe
+            // riordinare le tracce di un progetto indovinando il folderId,
+            // anche senza avervi accesso.
+            return new JSONResponse(['error' => 'folder not found'], 404);
         }
 
         $project = $this->projectMapper->findByFolderFileId($folderId);

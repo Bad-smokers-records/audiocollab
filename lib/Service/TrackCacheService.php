@@ -19,13 +19,20 @@ class TrackCacheService {
 
     private $versionMapper;
     private $appConfig;
-    private $ffmpegServiceUrl = 'http://localhost:3100';
+    private $ffmpegServiceUrl;
     private $cacheBasePath;
 
     public function __construct(TrackVersionMapper $versionMapper, IAppConfig $appConfig) {
         $this->versionMapper = $versionMapper;
         $this->appConfig = $appConfig;
-        $this->cacheBasePath = '/volume1/web/nextcloud-data/appdata_audiocollab';
+        $this->ffmpegServiceUrl = $appConfig->getAppValueString(
+            Application::CONFIG_FFMPEG_SERVICE_URL,
+            Application::DEFAULT_FFMPEG_SERVICE_URL
+        );
+        $this->cacheBasePath = $appConfig->getAppValueString(
+            Application::CONFIG_CACHE_BASE_PATH,
+            Application::DEFAULT_CACHE_BASE_PATH
+        );
     }
 
     /**

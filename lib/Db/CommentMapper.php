@@ -31,6 +31,18 @@ class CommentMapper extends QBMapper {
         }
     }
 
+    /**
+     * I commenti più recenti (across tutte le tracce), per la dashboard.
+     */
+    public function findRecentComments(int $limit): array {
+        $qb = $this->db->getQueryBuilder();
+        $qb->select('*')
+            ->from('audiocollab_comments')
+            ->orderBy('created_at', 'DESC')
+            ->setMaxResults($limit);
+        return $this->findEntities($qb);
+    }
+
     public function deleteByParentId(int $parentId): void {
         $qb = $this->db->getQueryBuilder();
         $qb->delete('audiocollab_comments')

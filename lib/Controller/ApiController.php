@@ -10,6 +10,8 @@ use OCA\Audiocollab\AppInfo\Application;
 use OCA\Audiocollab\Service\TrackCacheService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\NoAdminRequired;
+use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\AppFramework\Services\IAppConfig;
@@ -54,10 +56,8 @@ class ApiController extends Controller {
         $this->appConfig = $appConfig;
     }
 
-    /**
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     */
+    #[NoAdminRequired]
+    #[NoCSRFRequired]
     public function getTrack(int $fileid, ?int $version = null): JSONResponse {
         $user = $this->userSession->getUser();
         if (!$user) {
@@ -165,11 +165,21 @@ class ApiController extends Controller {
     }
 
 
-    /**
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     */
+    #[NoAdminRequired]
+    #[NoCSRFRequired]
     public function stream(int $fileid, ?int $version = null): Response {
+        $user = $this->userSession->getUser();
+        if (!$user) {
+            return new JSONResponse(['error' => 'not authenticated'], 401);
+        }
+        $userFolder = $this->rootFolder->getUserFolder($user->getUID());
+        if (empty($userFolder->getById($fileid))) {
+            // Senza questo controllo, qualunque utente autenticato potrebbe
+            // ascoltare l'audio di un file indovinando/iterando il fileid,
+            // aggirando completamente la condivisione di Nextcloud.
+            return new JSONResponse(['error' => 'file not found'], 404);
+        }
+
         $trackVersion = $version !== null
             ? $this->versionMapper->findByIdForFile($version, $fileid)
             : $this->versionMapper->findLatestByFileId($fileid);
@@ -215,10 +225,8 @@ class ApiController extends Controller {
         return $response;
     }
 
-    /**
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     */
+    #[NoAdminRequired]
+    #[NoCSRFRequired]
     public function addComment(int $fileid, float $timestamp_seconds, string $body, ?int $parent_id = null, ?int $version_id = null): JSONResponse {
         $user = $this->userSession->getUser();
         if (!$user) {
@@ -255,10 +263,8 @@ class ApiController extends Controller {
         ]);
     }
 
-    /**
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     */
+    #[NoAdminRequired]
+    #[NoCSRFRequired]
     public function updateComment(int $id, string $body): JSONResponse {
         $user = $this->userSession->getUser();
         if (!$user) {
@@ -282,10 +288,8 @@ class ApiController extends Controller {
         ]);
     }
 
-    /**
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     */
+    #[NoAdminRequired]
+    #[NoCSRFRequired]
     public function deleteComment(int $id): JSONResponse {
         $user = $this->userSession->getUser();
         if (!$user) {
@@ -306,10 +310,8 @@ class ApiController extends Controller {
         return new JSONResponse(['id' => $id]);
     }
 
-    /**
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     */
+    #[NoAdminRequired]
+    #[NoCSRFRequired]
     public function setCommentStatus(int $id, string $status): JSONResponse {
         $user = $this->userSession->getUser();
         if (!$user) {
@@ -323,6 +325,9 @@ class ApiController extends Controller {
         if ($comment === null) {
             return new JSONResponse(['error' => 'comment not found'], 404);
         }
+        if (!$this->userCanWriteCommentTarget($comment, $user)) {
+            return new JSONResponse(['error' => 'forbidden'], 403);
+        }
 
         $comment->setStatus($status);
         $comment = $this->commentMapper->update($comment);
@@ -333,10 +338,8 @@ class ApiController extends Controller {
         ]);
     }
 
-    /**
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     */
+    #[NoAdminRequired]
+    #[NoCSRFRequired]
     public function setTrackStatus(int $fileid, string $status, ?int $version_id = null): JSONResponse {
         if (!$this->appConfig->getAppValueBool(Application::CONFIG_TRACK_STATUS, true)) {
             return new JSONResponse(['error' => 'track status feature disabled'], 403);
@@ -376,10 +379,8 @@ class ApiController extends Controller {
         ]);
     }
 
-    /**
-     * @NoAdminRequired
-     * @NoCSRFRequired
-     */
+    #[NoAdminRequired]
+    #[NoCSRFRequired]
     public function updateMetadata(int $fileid, ?string $artist = null, ?string $title = null): JSONResponse {
         $user = $this->userSession->getUser();
         if (!$user) {
@@ -411,6 +412,26 @@ class ApiController extends Controller {
             'artist' => $artist,
             'title' => $title,
         ]);
+    }
+
+    /**
+     * Verifica che l'utente possa scrivere sul file a cui appartiene il
+     * commento (proprietario o collaboratore con permesso di scrittura),
+     * usando lo stesso meccanismo di condivisione nativo di Nextcloud invece
+     * di una lista di permessi nostra.
+     */
+    private function userCanWriteCommentTarget(Comment $comment, \OCP\IUser $user): bool {
+        $versions = $this->versionMapper->findByIds([$comment->getVersionId()]);
+        if (empty($versions)) {
+            return false;
+        }
+        $version = $versions[0];
+        $userFolder = $this->rootFolder->getUserFolder($user->getUID());
+        $files = $userFolder->getById($version->getFileId());
+        if (empty($files)) {
+            return false;
+        }
+        return $files[0]->isUpdateable();
     }
 
     /**

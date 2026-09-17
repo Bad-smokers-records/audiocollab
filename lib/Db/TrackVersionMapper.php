@@ -61,4 +61,49 @@ class TrackVersionMapper extends QBMapper {
             return null;
         }
     }
+
+    /**
+     * Le versioni caricate più di recente (across tutti i file), per la
+     * dashboard. Non deduplicate per file_id: chi chiama tiene solo la prima
+     * occorrenza per file (già la più recente, essendo la query ordinata).
+     */
+    public function findRecentVersions(int $limit): array {
+        $qb = $this->db->getQueryBuilder();
+        $qb->select('*')
+            ->from('audiocollab_versions')
+            ->orderBy('uploaded_at', 'DESC')
+            ->setMaxResults($limit);
+        return $this->findEntities($qb);
+    }
+
+    /**
+     * Solo le colonne necessarie per calcolare le statistiche della
+     * dashboard (numero tracce, stato più recente per file), ordinate per
+     * poter tenere in PHP solo la prima occorrenza (più recente) per file.
+     *
+     * @return array<int, array{file_id: int, version_number: int, status: string}>
+     */
+    public function findAllForStats(): array {
+        $qb = $this->db->getQueryBuilder();
+        $qb->select('file_id', 'version_number', 'status')
+            ->from('audiocollab_versions')
+            ->orderBy('file_id', 'ASC')
+            ->addOrderBy('version_number', 'DESC');
+        return $qb->executeQuery()->fetchAll();
+    }
+
+    /**
+     * @param int[] $ids
+     * @return TrackVersion[]
+     */
+    public function findByIds(array $ids): array {
+        if (empty($ids)) {
+            return [];
+        }
+        $qb = $this->db->getQueryBuilder();
+        $qb->select('*')
+            ->from('audiocollab_versions')
+            ->where($qb->expr()->in('id', $qb->createNamedParameter($ids, IQueryBuilder::PARAM_INT_ARRAY)));
+        return $this->findEntities($qb);
+    }
 }

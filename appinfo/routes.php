@@ -14,5 +14,6 @@ return [
         ['name' => 'project#reorder', 'url' => '/api/project/reorder', 'verb' => 'POST'],
         ['name' => 'settings#get', 'url' => '/api/settings', 'verb' => 'GET'],
         ['name' => 'settings#save', 'url' => '/api/settings', 'verb' => 'POST'],
+        ['name' => 'dashboard#get', 'url' => '/api/dashboard', 'verb' => 'GET'],
     ],
 ];
