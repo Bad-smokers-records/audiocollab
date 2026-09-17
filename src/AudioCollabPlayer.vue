@@ -226,6 +226,13 @@
                 <div class="ac-comments-header">
                     <span>Commenti</span>
                     <span class="ac-comments-count" v-if="comments.length">{{ comments.length }}</span>
+                    <button
+                        v-if="hasThreadsWithReplies"
+                        type="button"
+                        class="ac-collapse-all-btn"
+                        :title="allThreadsExpanded ? 'Comprimi tutte le risposte' : 'Espandi tutte le risposte'"
+                        @click="toggleAllThreads"
+                    >{{ allThreadsExpanded ? '−' : '+' }}</button>
                     <div class="ac-sort-toggle">
                         <button :class="{ 'ac-sort-active': sortMode === 'timestamp' }" @click="sortMode = 'timestamp'">Per timestamp</button>
                         <button :class="{ 'ac-sort-active': sortMode === 'recent' }" @click="sortMode = 'recent'">Più recenti</button>
@@ -502,6 +509,15 @@ export default {
             }
             return list.sort((a, b) => a.timestamp_seconds - b.timestamp_seconds)
         },
+        threadsWithReplies() {
+            return this.sortedComments.filter(c => this.repliesFor(c.id).length > 0)
+        },
+        hasThreadsWithReplies() {
+            return this.threadsWithReplies.length > 0
+        },
+        allThreadsExpanded() {
+            return this.threadsWithReplies.every(c => this.isThreadExpanded(c.id))
+        },
     },
     watch: {
         volume(value) {
@@ -740,6 +756,15 @@ export default {
         },
         toggleThread(commentId) {
             this.$set(this.collapsedThreads, commentId, !this.collapsedThreads[commentId])
+        },
+        toggleAllThreads() {
+            // Se sono già tutti espansi comprime tutto, altrimenti espande
+            // tutto: un solo bottone che riflette lo stato aggregato invece
+            // di dover aprire/chiudere ogni thread singolarmente.
+            const collapse = this.allThreadsExpanded
+            this.threadsWithReplies.forEach(c => {
+                this.$set(this.collapsedThreads, c.id, collapse)
+            })
         },
         startReply(comment) {
             this.replyingTo = comment.id
@@ -1569,6 +1594,28 @@ export default {
     font-weight: 700;
     padding: 1px 7px;
     border-radius: 10px;
+}
+
+.ac-collapse-all-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border: 1px solid var(--ac-border);
+    border-radius: 50%;
+    background: var(--ac-surface);
+    color: var(--ac-text-dim);
+    font-size: 14px;
+    line-height: 1;
+    font-weight: 700;
+    padding: 0;
+    cursor: pointer;
+}
+
+.ac-collapse-all-btn:hover {
+    color: var(--ac-accent-dark);
+    border-color: var(--ac-accent);
 }
 
 .ac-sort-toggle {
