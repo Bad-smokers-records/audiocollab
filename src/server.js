@@ -7,47 +7,12 @@ const os = require('os');
 const app = express();
 const upload = multer({ dest: os.tmpdir() });
 
-app.post('/transcode', upload.single('file'), (req, res) => {
-  const inputPath = req.file.path;
-  const outputPath = inputPath + '.mp3';
-
-  execFile('ffmpeg', ['-y', '-i', inputPath, '-codec:a', 'libmp3lame', '-b:a', '320k', outputPath], (err) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ error: 'transcode failed' });
-    }
-    res.sendFile(outputPath, () => {
-      fs.unlink(inputPath, () => {});
-      fs.unlink(outputPath, () => {});
-    });
-  });
-});
-
-app.post('/waveform', upload.single('file'), (req, res) => {
-  const inputPath = req.file.path;
-  runWaveform(inputPath)
-    .then((result) => res.json(result))
-    .catch(() => res.status(500).json({ error: 'waveform extraction failed' }))
-    .finally(() => fs.unlink(inputPath, () => {}));
-});
-
 // Nuovo: estrae metadati (artista/titolo) con ffprobe
 app.post('/metadata', upload.single('file'), (req, res) => {
   const inputPath = req.file.path;
   runFfprobe(inputPath)
     .then((probe) => res.json(probe.metadata))
     .catch(() => res.json({ artist: null, title: null }))
-    .finally(() => fs.unlink(inputPath, () => {}));
-});
-
-// Nuovo: analisi loudness (LUFS integrato, LRA, True Peak) con il filtro
-// loudnorm di ffmpeg in modalita' di sola analisi (single-pass), non
-// modifica l'audio - serve solo a misurare i valori per il loudness matching.
-app.post('/loudness', upload.single('file'), (req, res) => {
-  const inputPath = req.file.path;
-  runLoudness(inputPath)
-    .then((result) => res.json(result))
-    .catch(() => res.status(500).json({ error: 'loudness analysis failed' }))
     .finally(() => fs.unlink(inputPath, () => {}));
 });
 
