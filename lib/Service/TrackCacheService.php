@@ -42,16 +42,28 @@ class TrackCacheService {
      * esistente se l'etag corrisponde a un ripristino di uno stato precedente).
      */
     public function ensureVersionForCurrentContent(int $fileId, Node $file, IUser $user): TrackVersion {
-        $realPath = $file->getStorage()->getLocalFile($file->getInternalPath());
+        $currentEtag = $file->getEtag();
+        $latest = $this->versionMapper->findLatestByFileId($fileId);
+
+        if ($latest !== null && $latest->getEtag() === $currentEtag) {
+            // Percorso comune: nulla è cambiato dall'ultima volta che
+            // abbiamo guardato questo file. Una nuova versione nativa di
+            // Nextcloud può comparire solo quando il contenuto (quindi
+            // l'etag) cambia, quindi con etag invariato non c'è nulla di
+            // nuovo da importare: evitiamo di scansionare la cronologia
+            // nativa (IVersionManager) ad ogni chiamata, chiamata per
+            // ciascuna traccia sia dal player che dalla vista progetto.
+            return $latest;
+        }
 
         $this->syncNativeVersionHistory($fileId, $file, $user);
-
         $latest = $this->versionMapper->findLatestByFileId($fileId);
-        $currentEtag = $file->getEtag();
+
         if ($latest === null || $latest->getEtag() !== $currentEtag) {
             // Il contenuto è cambiato: se corrisponde a una versione nostra già vista
             // (es. un ripristino da Nextcloud di uno stato precedente), la riusiamo
             // invece di duplicarla.
+            $realPath = $file->getStorage()->getLocalFile($file->getInternalPath());
             $existing = $latest !== null ? $this->versionMapper->findByEtag($fileId, $currentEtag) : null;
             $latest = $existing ?? $this->createNewVersion($fileId, $realPath, $user->getUID(), $currentEtag, $file->getMTime(), $latest);
         }
