@@ -15,8 +15,8 @@ App per Nextcloud per la revisione collaborativa di mix audio in studio: player 
 
 ## Requisiti
 
-- Nextcloud 27–34.
-- PHP 8.1+.
+- Nextcloud 27–35.
+- PHP 8.1+ (8.3+ se in esecuzione su Nextcloud 35, che lo richiede come minimo).
 - **Un microservizio esterno (`audiotools`) per la transcodifica e l'analisi audio** — vedi sotto. Senza questo componente l'app si installa e si avvia, ma le funzionalità principali (anteprima audio, waveform, loudness matching, simulazione piattaforme) non funzionano.
 
 ## Il microservizio `audiotools`
@@ -29,20 +29,25 @@ ffmpeg e l'elaborazione audio sono operazioni pesanti (CPU, memoria, tempo) che 
 
 ### Setup
 
-1. Nella cartella del microservizio (fuori dalla cartella `apps/` di Nextcloud) servono `Dockerfile`, `package.json` e `src/server.js` — quest'ultimo è incluso in questo repository sotto `src/server.js` come riferimento/sorgente di verità: copialo nel contesto di build del container prima di ogni aggiornamento.
-2. Build e avvio:
+Il `Dockerfile` e il `docker-compose.yml` del microservizio sono inclusi in questo repository sotto `docker/audiotools/` e usano direttamente `src/server.js` come sorgente (nessuna copia manuale da mantenere allineata).
+
+1. Build e avvio, dalla **radice del repository** (il contesto di build deve includere `src/`):
    ```bash
-   docker build -t audiotools .
+   docker compose -f docker/audiotools/docker-compose.yml up -d --build
+   ```
+   oppure, senza compose:
+   ```bash
+   docker build -f docker/audiotools/Dockerfile -t audiotools .
    docker run -d --name audiotools --restart unless-stopped -p 127.0.0.1:3100:3100 audiotools
    ```
    La porta va esposta solo su `127.0.0.1` (o su una rete interna raggiungibile dal server Nextcloud), mai pubblicamente: il servizio non fa autenticazione.
-3. Verifica che risponda:
+2. Verifica che risponda:
    ```bash
    curl http://localhost:3100/health
    ```
-4. In **Impostazioni → Amministrazione → AudioCollab** (o via `occ config:app:set`), configura se necessario:
+3. In **Impostazioni → Amministrazione → AudioCollab** (o via `occ config:app:set`), configura se necessario:
    - `ffmpeg_service_url` — URL del servizio (default `http://localhost:3100`, va cambiato se il container gira su un altro host/porta).
-   - `cache_base_path` — percorso su disco dove AudioCollab tiene la cache di mp3/waveform generati.
+   - `cache_base_path` — percorso su disco dove AudioCollab tiene la cache di mp3/waveform generati. Facoltativo: se non impostato, di default viene creato automaticamente sotto la data directory di Nextcloud (`<datadirectory>/appdata_<instanceid>/audiocollab_cache`), quindi funziona senza configurazione su qualunque installazione. Impostalo solo se vuoi la cache su un disco/volume diverso da quello dei dati di Nextcloud.
 
    ```bash
    occ config:app:set audiocollab ffmpeg_service_url --value=http://host:porta

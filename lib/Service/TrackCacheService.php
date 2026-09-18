@@ -7,6 +7,7 @@ use OCA\Audiocollab\Db\TrackVersion;
 use OCA\Files_Versions\Versions\IVersionManager;
 use OCP\AppFramework\Services\IAppConfig;
 use OCP\Files\Node;
+use OCP\IConfig;
 use OCP\IUser;
 
 /**
@@ -22,7 +23,7 @@ class TrackCacheService {
     private $ffmpegServiceUrl;
     private $cacheBasePath;
 
-    public function __construct(TrackVersionMapper $versionMapper, IAppConfig $appConfig) {
+    public function __construct(TrackVersionMapper $versionMapper, IAppConfig $appConfig, IConfig $config) {
         $this->versionMapper = $versionMapper;
         $this->appConfig = $appConfig;
         $this->ffmpegServiceUrl = $appConfig->getAppValueString(
@@ -31,8 +32,22 @@ class TrackCacheService {
         );
         $this->cacheBasePath = $appConfig->getAppValueString(
             Application::CONFIG_CACHE_BASE_PATH,
-            Application::DEFAULT_CACHE_BASE_PATH
+            $this->buildDefaultCacheBasePath($config)
         );
+    }
+
+    /**
+     * Percorso di cache di default, portabile su qualunque installazione
+     * Nextcloud: sotto la data directory configurata, come farebbe
+     * IAppData. Non usiamo IAppData direttamente perché il resto della
+     * classe lavora con percorsi assoluti reali (serve un file vero su
+     * disco per CURLFile quando si carica al microservizio audiotools, non
+     * uno stream astratto).
+     */
+    private function buildDefaultCacheBasePath(IConfig $config): string {
+        $dataDir = rtrim($config->getSystemValue('datadirectory', sys_get_temp_dir()), '/');
+        $instanceId = $config->getSystemValue('instanceid', 'audiocollab');
+        return $dataDir . '/appdata_' . $instanceId . '/audiocollab_cache';
     }
 
     /**

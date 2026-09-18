@@ -1,0 +1,22 @@
+# Avvio: dalla RADICE del repository (non da questa cartella), cosi' il
+# build context include src/server.js:
+#
+#   docker compose -f docker/audiotools/docker-compose.yml up -d --build
+#
+# Poi in Nextcloud (Impostazioni > Amministrazione > AudioCollab, o via
+# occ config:app:set audiocollab ffmpeg_service_url --value=...) punta al
+# servizio con l'host raggiungibile dal container/processo di Nextcloud:
+# "http://localhost:3100" se Nextcloud gira sullo stesso host fuori da
+# Docker, oppure "http://audiotools:3100" se anche Nextcloud gira in un
+# container sulla stessa rete Docker.
+services:
+  audiotools:
+    build:
+      context: ../..
+      dockerfile: docker/audiotools/Dockerfile
+    container_name: audiotools
+    restart: unless-stopped
+    # Solo loopback: il servizio non fa autenticazione, non va mai esposto
+    # su un'interfaccia pubblica o su 0.0.0.0.
+    ports:
+      - "127.0.0.1:3100:3100"

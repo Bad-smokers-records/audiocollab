@@ -21,13 +21,17 @@ class Application extends App implements IBootstrap {
     public const CONFIG_TRACK_STATUS = 'feature_track_status';
 
     // Configurabili per-installazione (es. `occ config:app:set audiocollab
-    // ffmpeg_service_url --value=http://host:porta`), non hardcoded: questa
-    // installazione specifica li usa già con questi stessi valori come
-    // default, così il comportamento attuale non cambia.
+    // ffmpeg_service_url --value=http://host:porta`). Il default della porta
+    // locale va bene su qualunque installazione (il container audiotools è
+    // sempre un sidecar sullo stesso host). Il cache path invece NON ha più
+    // un default hardcoded: prima era un percorso assoluto Synology
+    // (/volume1/...), che su qualunque altra installazione Nextcloud non
+    // sarebbe mai esistito. Il default reale è calcolato a runtime in
+    // TrackCacheService a partire dalla data directory configurata di
+    // Nextcloud, portabile su qualunque host.
     public const CONFIG_FFMPEG_SERVICE_URL = 'ffmpeg_service_url';
     public const DEFAULT_FFMPEG_SERVICE_URL = 'http://localhost:3100';
     public const CONFIG_CACHE_BASE_PATH = 'cache_base_path';
-    public const DEFAULT_CACHE_BASE_PATH = '/volume1/web/nextcloud-data/appdata_audiocollab';
 
     public function __construct() {
         parent::__construct(self::APP_ID);
