@@ -215,8 +215,8 @@
                             :class="{ 'ac-platform-pill-active': platformSimulation === p.id }"
                             @click="platformSimulation = p.id"
                         >
-                            <svg v-if="p.icon" class="ac-platform-icon" width="13" height="13" viewBox="0 0 24 24" :fill="platformSimulation === p.id ? '#fff' : p.color"><path :d="p.icon"/></svg>
-                            <span>{{ p.label }}</span>
+                            <svg v-if="p.icon" class="ac-platform-icon" width="13" height="13" viewBox="0 0 24 24" :fill="platformSimulation === p.id ? '#fff' : (p.color || 'currentColor')"><path :d="p.icon"/></svg>
+                            <span class="ac-platform-pill-label">{{ p.label }}</span>
                         </button>
                     </div>
                     <span class="ac-platform-meta" v-if="platformSimulation !== 'original'">
@@ -461,7 +461,14 @@ export default {
             // Path ufficiali da Simple Icons (simpleicons.org, CC0), pensati
             // apposta per l'uso di loghi di marca nelle interfacce.
             platformOptions: [
-                { id: 'original', label: 'Originale' },
+                {
+                    id: 'original',
+                    label: 'Originale',
+                    // Non è un marchio: barre generiche stile equalizzatore,
+                    // così su mobile ha un'icona coerente con le altre senza
+                    // inventare un logo per qualcosa che non ne ha uno.
+                    icon: 'M4 10h3v10H4z M10 4h3v16h-3z M16 13h3v7h-3z',
+                },
                 {
                     id: 'spotify',
                     label: 'Spotify',
@@ -2060,6 +2067,26 @@ export default {
 @media (max-width: 520px) {
     .audiocollab-player {
         padding: 32px 10px 10px;
+    }
+
+    /* Solo icona su mobile, nel colore dell'app invece che nei colori dei
+       singoli brand: niente testo scritto significa niente più "YouTube
+       Music" che va a capo o esce dal bordo. */
+    .ac-platform-pill-label {
+        display: none;
+    }
+
+    .ac-platform-pill {
+        padding: 8px 10px;
+    }
+
+    .ac-platform-icon {
+        width: 15px;
+        height: 15px;
+    }
+
+    .ac-platform-pill:not(.ac-platform-pill-active) .ac-platform-icon {
+        fill: var(--ac-text-dim) !important;
     }
 
     .ac-header {
