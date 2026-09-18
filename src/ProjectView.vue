@@ -3,15 +3,15 @@
         <div class="ac-project-panel">
             <header class="ac-project-header">
                 <div>
-                    <h2 class="ac-project-title">{{ project.name || 'Progetto' }}</h2>
-                    <p class="ac-project-subtitle">Confronto loudness delle tracce</p>
+                    <h2 class="ac-project-title">{{ project.name || t('audiocollab', 'Project') }}</h2>
+                    <p class="ac-project-subtitle">{{ t('audiocollab', 'Track loudness comparison') }}</p>
                 </div>
-                <button class="ac-project-close" @click="close" title="Chiudi">
+                <button class="ac-project-close" @click="close" :title="t('audiocollab', 'Close')">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
                 </button>
             </header>
 
-            <div v-if="loading" class="ac-project-loading">Caricamento tracce...</div>
+            <div v-if="loading" class="ac-project-loading">{{ t('audiocollab', 'Loading tracks...') }}</div>
 
             <template v-else>
                 <div class="ac-project-toolbar" v-if="features.loudnessMatching && hasAnyLoudness">
@@ -26,7 +26,7 @@
                         <span class="ac-toggle-knob"></span>
                     </button>
                     <span class="ac-project-toolbar-label">
-                        Bilancia il volume di riproduzione sulla media del progetto ({{ averageLoudness.toFixed(1) }} LUFS)
+                        {{ t('audiocollab', 'Balance playback volume to the project average ({lufs} LUFS)', { lufs: averageLoudness.toFixed(1) }) }}
                     </span>
                 </div>
 
@@ -43,7 +43,7 @@
                         @drop="onDrop(index)"
                         @dragend="onDragEnd"
                     >
-                        <span class="ac-track-handle" title="Trascina per riordinare">
+                        <span class="ac-track-handle" :title="t('audiocollab', 'Drag to reorder')">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>
                         </span>
                         <div class="ac-track-reorder-buttons">
@@ -51,14 +51,14 @@
                                 type="button"
                                 class="ac-track-reorder-btn"
                                 :disabled="index === 0"
-                                title="Sposta su"
+                                :title="t('audiocollab', 'Move up')"
                                 @click="moveTrack(index, -1)"
                             >▲</button>
                             <button
                                 type="button"
                                 class="ac-track-reorder-btn"
                                 :disabled="index === tracks.length - 1"
-                                title="Sposta giù"
+                                :title="t('audiocollab', 'Move down')"
                                 @click="moveTrack(index, 1)"
                             >▼</button>
                         </div>
@@ -66,7 +66,7 @@
                         <button
                             class="ac-track-play"
                             :disabled="!track.streamUrl"
-                            :title="track.streamUrl ? 'Riproduci' : 'Apri il file in AudioCollab per generare l\'anteprima'"
+                            :title="track.streamUrl ? t('audiocollab', 'Play') : t('audiocollab', 'Open the file in AudioCollab to generate the preview')"
                             @click="togglePlayTrack(track)"
                         >
                             <svg v-if="currentTrackFileId !== track.fileId || !isPlaying" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
@@ -81,7 +81,7 @@
                                 <span v-if="track.integratedLoudness !== null" class="ac-loudness-badge" :class="loudnessBadgeClass(track)">
                                     {{ track.integratedLoudness.toFixed(1) }} LUFS
                                 </span>
-                                <span v-else class="ac-loudness-badge ac-loudness-badge-unknown">n/d</span>
+                                <span v-else class="ac-loudness-badge ac-loudness-badge-unknown">{{ t('audiocollab', 'N/A') }}</span>
                             </template>
                         </div>
                     </div>
@@ -101,6 +101,7 @@
 <script>
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import { translate as t } from '@nextcloud/l10n'
 
 export default {
     name: 'ProjectView',
@@ -157,6 +158,7 @@ export default {
         }
     },
     methods: {
+        t,
         async fetchFeatures() {
             try {
                 const response = await axios.get(generateUrl('/apps/audiocollab/api/settings'))
@@ -186,7 +188,11 @@ export default {
             return 'ac-loudness-badge-off'
         },
         statusLabel(status) {
-            return { draft: 'Bozza', in_review: 'In revisione', approved: 'Approvato' }[status] || 'Bozza'
+            return {
+                draft: t('audiocollab', 'Draft'),
+                in_review: t('audiocollab', 'In review'),
+                approved: t('audiocollab', 'Approved'),
+            }[status] || t('audiocollab', 'Draft')
         },
         ensureAudioGraph() {
             if (this.audioContext) {

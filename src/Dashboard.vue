@@ -6,46 +6,46 @@
             </div>
             <div class="ac-header-text">
                 <h2 class="ac-title">AudioCollab</h2>
-                <p class="ac-subtitle">Le tue tracce e i commenti più recenti</p>
+                <p class="ac-subtitle">{{ t('audiocollab', 'Your most recent tracks and comments') }}</p>
             </div>
             <a v-if="isAdmin" class="ac-settings-link" :href="settingsUrl">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                Impostazioni
+                {{ t('audiocollab', 'Settings') }}
             </a>
         </header>
 
         <div v-if="loading" class="ac-loading">
             <span class="ac-spinner"></span>
-            Caricamento...
+            {{ t('audiocollab', 'Loading...') }}
         </div>
 
         <template v-else>
             <div class="ac-stats-row">
                 <div class="ac-stat-tile">
                     <span class="ac-stat-value">{{ stats.totalTracks }}</span>
-                    <span class="ac-stat-label">Tracce totali</span>
+                    <span class="ac-stat-label">{{ t('audiocollab', 'Total tracks') }}</span>
                 </div>
                 <template v-if="stats.statusBreakdown">
                     <div class="ac-stat-tile">
                         <span class="ac-stat-value">{{ stats.statusBreakdown.draft }}</span>
-                        <span class="ac-stat-label">Bozza</span>
+                        <span class="ac-stat-label">{{ t('audiocollab', 'Draft') }}</span>
                     </div>
                     <div class="ac-stat-tile">
                         <span class="ac-stat-value">{{ stats.statusBreakdown.in_review }}</span>
-                        <span class="ac-stat-label">In revisione</span>
+                        <span class="ac-stat-label">{{ t('audiocollab', 'In review') }}</span>
                     </div>
                     <div class="ac-stat-tile">
                         <span class="ac-stat-value">{{ stats.statusBreakdown.approved }}</span>
-                        <span class="ac-stat-label">Approvate</span>
+                        <span class="ac-stat-label">{{ t('audiocollab', 'Approved') }}</span>
                     </div>
                 </template>
             </div>
 
             <div class="ac-dashboard-columns">
                 <section class="ac-card">
-                    <h3 class="ac-card-title">Tracce recenti</h3>
+                    <h3 class="ac-card-title">{{ t('audiocollab', 'Recent tracks') }}</h3>
                     <div v-if="recentTracks.length === 0" class="ac-empty">
-                        Nessuna traccia con attività recente.
+                        {{ t('audiocollab', 'No tracks with recent activity.') }}
                     </div>
                     <a
                         v-for="track in recentTracks"
@@ -65,9 +65,9 @@
                 </section>
 
                 <section class="ac-card">
-                    <h3 class="ac-card-title">Commenti recenti</h3>
+                    <h3 class="ac-card-title">{{ t('audiocollab', 'Recent comments') }}</h3>
                     <div v-if="recentComments.length === 0" class="ac-empty">
-                        Nessun commento recente.
+                        {{ t('audiocollab', 'No recent comments.') }}
                     </div>
                     <a
                         v-for="comment in recentComments"
@@ -76,7 +76,13 @@
                         :href="comment.link"
                     >
                         <div class="ac-comment-top">
-                            <span class="ac-comment-track">{{ comment.trackName }}</span>
+                            <span class="ac-comment-track">
+                                {{ comment.trackName }}
+                                <span class="ac-version-badge" :title="t('audiocollab', 'Version')">
+                                    <svg class="ac-meta-icon" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                                    v{{ comment.versionNumber }}
+                                </span>
+                            </span>
                             <span class="ac-time-badge">{{ formatTime(comment.timestampSeconds) }}</span>
                         </div>
                         <p class="ac-comment-excerpt">
@@ -86,6 +92,28 @@
                     </a>
                 </section>
             </div>
+
+            <section class="ac-card ac-card-wide">
+                <h3 class="ac-card-title">{{ t('audiocollab', 'Classic comments on files') }}</h3>
+                <p class="ac-card-subtitle">{{ t('audiocollab', 'Comments added with Nextcloud\'s native "Comments" tab, not timestamped AudioCollab comments.') }}</p>
+                <div v-if="nativeComments.length === 0" class="ac-empty">
+                    {{ t('audiocollab', 'No recent classic comments.') }}
+                </div>
+                <a
+                    v-for="comment in nativeComments"
+                    :key="'native-' + comment.commentId"
+                    class="ac-comment-row"
+                    :href="comment.link"
+                >
+                    <div class="ac-comment-top">
+                        <span class="ac-comment-track">{{ comment.fileName }}</span>
+                    </div>
+                    <p class="ac-comment-excerpt">
+                        <strong>{{ comment.authorUid }}</strong>: {{ comment.excerpt }}
+                    </p>
+                    <span class="ac-comment-date">{{ formatDate(comment.createdAt) }}</span>
+                </a>
+            </section>
         </template>
     </div>
 </template>
@@ -93,6 +121,7 @@
 <script>
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import { translate as t, getCanonicalLocale } from '@nextcloud/l10n'
 
 export default {
     name: 'Dashboard',
@@ -101,6 +130,7 @@ export default {
             loading: true,
             recentTracks: [],
             recentComments: [],
+            nativeComments: [],
             stats: { totalTracks: 0, statusBreakdown: null },
             isAdmin: false,
         }
@@ -115,6 +145,7 @@ export default {
             const response = await axios.get(generateUrl('/apps/audiocollab/api/dashboard'))
             this.recentTracks = response.data.recentTracks || []
             this.recentComments = response.data.recentComments || []
+            this.nativeComments = response.data.nativeComments || []
             this.stats = response.data.stats || { totalTracks: 0, statusBreakdown: null }
             this.isAdmin = !!response.data.isAdmin
         } catch (e) {
@@ -124,8 +155,13 @@ export default {
         }
     },
     methods: {
+        t,
         statusLabel(status) {
-            return { draft: 'Bozza', in_review: 'In revisione', approved: 'Approvato' }[status] || 'Bozza'
+            return {
+                draft: t('audiocollab', 'Draft'),
+                in_review: t('audiocollab', 'In review'),
+                approved: t('audiocollab', 'Approved'),
+            }[status] || t('audiocollab', 'Draft')
         },
         formatTime(seconds) {
             const s = Math.max(0, Math.round(seconds || 0))
@@ -134,7 +170,9 @@ export default {
         formatDate(value) {
             if (!value) return ''
             const date = new Date(value.replace(' ', 'T') + 'Z')
-            return date.toLocaleDateString('it-IT', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+            // Segue la lingua dell'utente Nextcloud invece di essere fissa
+            // sull'italiano, ora che l'app è bilingue.
+            return date.toLocaleDateString(getCanonicalLocale(), { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
         },
     },
 }
@@ -286,6 +324,16 @@ export default {
     color: var(--ac-text);
 }
 
+.ac-card-wide {
+    margin-top: 16px;
+}
+
+.ac-card-subtitle {
+    margin: -6px 0 12px 0;
+    font-size: 11.5px;
+    color: var(--ac-text-faint);
+}
+
 .ac-empty {
     color: var(--ac-text-faint);
     font-style: italic;
@@ -387,12 +435,33 @@ export default {
 }
 
 .ac-comment-track {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     font-size: 12px;
     font-weight: 600;
     color: var(--ac-text);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.ac-version-badge {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    background: var(--ac-bg);
+    color: var(--ac-text-faint);
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 999px;
+}
+
+.ac-meta-icon {
+    flex-shrink: 0;
+    display: inline-block;
 }
 
 .ac-time-badge {

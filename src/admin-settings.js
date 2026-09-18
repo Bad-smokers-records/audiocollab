@@ -30,9 +30,9 @@ document.addEventListener('DOMContentLoaded', function () {
     })
 
     const features = [
-        { key: 'loudnessMatching', label: 'Bilanciamento del volume (loudness matching) tra le tracce di un progetto' },
-        { key: 'commentNotifications', label: 'Notifiche per i commenti a timestamp' },
-        { key: 'trackStatus', label: 'Stato di revisione della traccia (bozza / in revisione / approvato)' },
+        { key: 'loudnessMatching', label: t('audiocollab', 'Volume balancing (loudness matching) between the tracks of a project') },
+        { key: 'commentNotifications', label: t('audiocollab', 'Notifications for timestamped comments') },
+        { key: 'trackStatus', label: t('audiocollab', 'Track review status (draft / in review / approved)') },
     ]
 
     const section = document.createElement('div')
@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const hint = document.createElement('p')
     hint.classList.add('settings-hint')
-    hint.textContent = 'Abilita o disabilita le funzionalità dell\'app per tutti gli utenti.'
+    hint.textContent = t('audiocollab', 'Enable or disable the app\'s features for all users.')
     section.appendChild(hint)
 
     const status = document.createElement('span')
@@ -68,14 +68,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
         checkbox.addEventListener('change', function () {
             state[feature.key] = checkbox.checked
-            status.textContent = 'Salvataggio...'
+            status.textContent = t('audiocollab', 'Saving...')
             saveSettings(state)
                 .then(function (res) {
-                    status.textContent = res.ok ? 'Salvato' : 'Errore nel salvataggio'
+                    status.textContent = res.ok ? t('audiocollab', 'Saved') : t('audiocollab', 'Error while saving')
                     setTimeout(function () { status.textContent = '' }, 2000)
                 })
                 .catch(function () {
-                    status.textContent = 'Errore nel salvataggio'
+                    status.textContent = t('audiocollab', 'Error while saving')
                 })
         })
 

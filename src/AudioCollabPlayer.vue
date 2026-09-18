@@ -16,7 +16,7 @@
                             <h2 class="ac-title">{{ fileName }}</h2>
                             <div class="ac-version-switcher">
                                 <button class="ac-version-pill ac-version-pill-btn" @click="showVersionMenu = !showVersionMenu">
-                                    v{{ version.number || 1 }}<span v-if="!version.isLatest"> (storica)</span>
+                                    v{{ version.number || 1 }}<span v-if="!version.isLatest"> ({{ t('audiocollab', 'historical') }})</span>
                                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
                                 </button>
                                 <div v-if="showVersionMenu" class="ac-version-menu">
@@ -29,14 +29,14 @@
                                     >
                                         <span class="ac-version-menu-number">v{{ v.number }}</span>
                                         <span class="ac-version-menu-meta">{{ v.uploadedBy }} · {{ formatDate(v.uploadedAt) }}</span>
-                                        <span class="ac-version-menu-meta" v-if="v.nativeRevisionId">rev. Nextcloud: {{ formatUnixDate(v.nativeRevisionId) }}</span>
+                                        <span class="ac-version-menu-meta" v-if="v.nativeRevisionId">{{ t('audiocollab', 'Nextcloud rev.:') }} {{ formatUnixDate(v.nativeRevisionId) }}</span>
                                     </button>
                                 </div>
                             </div>
                         </div>
                         <p class="ac-subtitle" v-if="artist">{{ artist }}</p>
                         <p class="ac-file-meta">
-                            {{ format }}<span v-if="sizeLabel"> · {{ sizeLabel }}</span><span v-if="version.uploadedAt"> · caricato il {{ formatDate(version.uploadedAt) }}</span>
+                            {{ format }}<span v-if="sizeLabel"> · {{ sizeLabel }}</span><span v-if="version.uploadedAt"> · {{ t('audiocollab', 'uploaded on') }} {{ formatDate(version.uploadedAt) }}</span>
                         </p>
                     </div>
                     <div class="ac-header-side">
@@ -65,17 +65,17 @@
                         <span class="ac-quality-badge" :class="{ 'ac-quality-badge-lossless': isLossless }">
                             {{ qualityLabel }}
                         </span>
-                        <button v-if="isOwner" class="ac-icon-btn" @click="startEditingMetadata" title="Modifica artista e titolo">
+                        <button v-if="isOwner" class="ac-icon-btn" @click="startEditingMetadata" :title="t('audiocollab', 'Edit artist and title')">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
                         </button>
                     </div>
                 </div>
                 <div v-else class="ac-header-edit">
-                    <input v-model="editArtist" class="ac-input" placeholder="Artista" />
-                    <input v-model="editTitle" class="ac-input" placeholder="Titolo" />
+                    <input v-model="editArtist" class="ac-input" :placeholder="t('audiocollab', 'Artist')" />
+                    <input v-model="editTitle" class="ac-input" :placeholder="t('audiocollab', 'Title')" />
                     <div class="ac-header-edit-actions">
-                        <button class="ac-btn ac-btn-ghost" @click="cancelEditingMetadata">Annulla</button>
-                        <button class="ac-btn ac-btn-primary" @click="saveMetadata">Salva</button>
+                        <button class="ac-btn ac-btn-ghost" @click="cancelEditingMetadata">{{ t('audiocollab', 'Cancel') }}</button>
+                        <button class="ac-btn ac-btn-primary" @click="saveMetadata">{{ t('audiocollab', 'Save') }}</button>
                     </div>
                 </div>
             </header>
@@ -83,16 +83,16 @@
             <nav class="ac-tabbar">
                 <button class="ac-tab" :class="{ 'ac-tab-active': activeTab === 'overview' }" @click="activeTab = 'overview'">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12h3l2-7 4 14 3-10 2 3h4"/></svg>
-                    Panoramica
+                    {{ t('audiocollab', 'Overview') }}
                 </button>
                 <button class="ac-tab" :class="{ 'ac-tab-active': activeTab === 'comments' }" @click="activeTab = 'comments'">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.4A8.5 8.5 0 1 1 21 11.5Z"/></svg>
-                    Commenti
+                    {{ t('audiocollab', 'Comments') }}
                     <span v-if="comments.length" class="ac-tab-count">{{ comments.length }}</span>
                 </button>
                 <button class="ac-tab" :class="{ 'ac-tab-active': activeTab === 'versions' }" @click="activeTab = 'versions'">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 7v5l3 3"/></svg>
-                    Versioni
+                    {{ t('audiocollab', 'Versions') }}
                 </button>
             </nav>
 
@@ -134,18 +134,18 @@
                 </div>
 
                 <div class="ac-transport">
-                    <button class="ac-play-btn" @click="togglePlay" :title="isPlaying ? 'Pausa' : 'Riproduci'">
+                    <button class="ac-play-btn" @click="togglePlay" :title="isPlaying ? t('audiocollab', 'Pause') : t('audiocollab', 'Play')">
                         <svg v-if="!isPlaying" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
                         <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
                     </button>
-                    <button class="ac-skip-btn" @click="skip(-10)" title="Indietro 10s">
+                    <button class="ac-skip-btn" @click="skip(-10)" :title="t('audiocollab', 'Back 10s')">
                         <svg width="23" height="23" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M12.5 6L6 12l6.5 6z"/>
                             <path d="M19 6l-6.5 6 6.5 6z"/>
                         </svg>
                         <span class="ac-skip-label">10s</span>
                     </button>
-                    <button class="ac-skip-btn" @click="skip(10)" title="Avanti 10s">
+                    <button class="ac-skip-btn" @click="skip(10)" :title="t('audiocollab', 'Forward 10s')">
                         <svg width="23" height="23" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M11.5 6L18 12l-6.5 6z"/>
                             <path d="M5 6l6.5 6L5 18z"/>
@@ -196,17 +196,17 @@
                         <span class="ac-toggle-knob"></span>
                     </button>
                     <div class="ac-loudness-text">
-                        <span class="ac-loudness-label">Bilancia il volume con le altre tracce</span>
+                        <span class="ac-loudness-label">{{ t('audiocollab', 'Balance the volume with other tracks') }}</span>
                         <span class="ac-loudness-meta">
                             {{ version.integratedLoudness.toFixed(1) }} LUFS
                             <span v-if="loudnessMatchEnabled">→ {{ loudnessMatch.targetLoudness.toFixed(1) }} LUFS ({{ loudnessMatch.gainDb >= 0 ? '+' : '' }}{{ loudnessMatch.gainDb.toFixed(1) }} dB)</span>
-                            <span> · confronto con {{ loudnessMatch.comparedTracks }} tracce</span>
+                            <span> · {{ t('audiocollab', 'compared with {count} tracks', { count: loudnessMatch.comparedTracks }) }}</span>
                         </span>
                     </div>
                 </div>
 
                 <div class="ac-platform-row" v-if="features.loudnessMatching && version.integratedLoudness !== null && version.integratedLoudness !== undefined">
-                    <span class="ac-platform-label">Simula su</span>
+                    <span class="ac-platform-label">{{ t('audiocollab', 'Simulate on') }}</span>
                     <div class="ac-platform-pills">
                         <button
                             v-for="p in platformOptions"
@@ -238,23 +238,23 @@
 
             <section class="ac-comments-section" v-if="activeTab === 'overview' || activeTab === 'comments'">
                 <div class="ac-comments-header">
-                    <span>Commenti</span>
+                    <span>{{ t('audiocollab', 'Comments') }}</span>
                     <span class="ac-comments-count" v-if="comments.length">{{ comments.length }}</span>
                     <button
                         v-if="hasThreadsWithReplies"
                         type="button"
                         class="ac-collapse-all-btn"
-                        :title="allThreadsExpanded ? 'Comprimi tutte le risposte' : 'Espandi tutte le risposte'"
+                        :title="allThreadsExpanded ? t('audiocollab', 'Collapse all replies') : t('audiocollab', 'Expand all replies')"
                         @click="toggleAllThreads"
                     >{{ allThreadsExpanded ? '−' : '+' }}</button>
                     <div class="ac-sort-toggle">
-                        <button :class="{ 'ac-sort-active': sortMode === 'timestamp' }" @click="sortMode = 'timestamp'">Per timestamp</button>
-                        <button :class="{ 'ac-sort-active': sortMode === 'recent' }" @click="sortMode = 'recent'">Più recenti</button>
+                        <button :class="{ 'ac-sort-active': sortMode === 'timestamp' }" @click="sortMode = 'timestamp'">{{ t('audiocollab', 'By timestamp') }}</button>
+                        <button :class="{ 'ac-sort-active': sortMode === 'recent' }" @click="sortMode = 'recent'">{{ t('audiocollab', 'Most recent') }}</button>
                     </div>
                 </div>
 
                 <div v-if="comments.length === 0" class="ac-no-comments">
-                    Nessun commento ancora. Clicca sulla waveform per aggiungerne uno.
+                    {{ t('audiocollab', 'No comments yet. Click the waveform to add one.') }}
                 </div>
 
                 <div class="ac-comment-rail">
@@ -280,48 +280,48 @@
                                     <span class="ac-comment-date">{{ formatDate(comment.created_at) }}</span>
                                 </div>
                                 <span class="ac-status-pill" :class="comment.status === 'resolved' ? 'ac-status-resolved' : 'ac-status-open'">
-                                    {{ comment.status === 'resolved' ? 'Risolto' : 'Aperto' }}
+                                    {{ comment.status === 'resolved' ? t('audiocollab', 'Resolved') : t('audiocollab', 'Open') }}
                                 </span>
                             </div>
 
                             <template v-if="editingCommentId === comment.id">
                                 <textarea v-model="editText" rows="2" class="ac-textarea"></textarea>
                                 <div class="ac-composer-row">
-                                    <button class="ac-btn ac-btn-ghost ac-btn-sm" @click="cancelEdit">Annulla</button>
-                                    <button class="ac-btn ac-btn-primary ac-btn-sm" @click="saveEdit(comment)">Salva</button>
+                                    <button class="ac-btn ac-btn-ghost ac-btn-sm" @click="cancelEdit">{{ t('audiocollab', 'Cancel') }}</button>
+                                    <button class="ac-btn ac-btn-primary ac-btn-sm" @click="saveEdit(comment)">{{ t('audiocollab', 'Save') }}</button>
                                 </div>
                             </template>
                             <p v-else class="ac-comment-text">{{ comment.body }}</p>
 
                             <div class="ac-comment-actions" v-if="editingCommentId !== comment.id">
-                                <button class="ac-action-link" @click="startReply(comment)" title="Rispondi">
+                                <button class="ac-action-link" @click="startReply(comment)" :title="t('audiocollab', 'Reply')">
                                     <svg class="ac-action-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 17l-5-5 5-5"/><path d="M4 12h11a5 5 0 0 1 5 5v1"/></svg>
-                                    <span class="ac-action-label">Rispondi</span>
+                                    <span class="ac-action-label">{{ t('audiocollab', 'Reply') }}</span>
                                 </button>
-                                <button v-if="isMine(comment.author_uid)" class="ac-action-link" @click="startEdit(comment)" title="Modifica">
+                                <button v-if="isMine(comment.author_uid)" class="ac-action-link" @click="startEdit(comment)" :title="t('audiocollab', 'Edit')">
                                     <svg class="ac-action-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
-                                    <span class="ac-action-label">Modifica</span>
+                                    <span class="ac-action-label">{{ t('audiocollab', 'Edit') }}</span>
                                 </button>
-                                <button v-if="isMine(comment.author_uid)" class="ac-action-link" @click="deleteComment(comment)" title="Elimina">
+                                <button v-if="isMine(comment.author_uid)" class="ac-action-link" @click="deleteComment(comment)" :title="t('audiocollab', 'Delete')">
                                     <svg class="ac-action-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
-                                    <span class="ac-action-label">Elimina</span>
+                                    <span class="ac-action-label">{{ t('audiocollab', 'Delete') }}</span>
                                 </button>
-                                <button class="ac-action-link" @click="toggleResolved(comment)" :title="comment.status === 'resolved' ? 'Riapri' : 'Risolto'">
+                                <button class="ac-action-link" @click="toggleResolved(comment)" :title="comment.status === 'resolved' ? t('audiocollab', 'Reopen') : t('audiocollab', 'Resolved')">
                                     <svg v-if="comment.status !== 'resolved'" class="ac-action-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
                                     <svg v-else class="ac-action-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 5v4h4"/></svg>
-                                    <span class="ac-action-label">{{ comment.status === 'resolved' ? 'Riapri' : 'Risolto' }}</span>
+                                    <span class="ac-action-label">{{ comment.status === 'resolved' ? t('audiocollab', 'Reopen') : t('audiocollab', 'Resolved') }}</span>
                                 </button>
                                 <button v-if="repliesFor(comment.id).length" class="ac-action-link ac-thread-toggle" @click="toggleThread(comment.id)">
                                     <span :class="{ 'ac-chevron-open': isThreadExpanded(comment.id) }">▸</span>
-                                    {{ repliesFor(comment.id).length }} risposte
+                                    {{ t('audiocollab', '{count} replies', { count: repliesFor(comment.id).length }) }}
                                 </button>
                             </div>
 
                             <div v-if="replyingTo === comment.id" class="ac-composer ac-reply-composer">
-                                <textarea v-model="replyText" rows="2" placeholder="Scrivi una risposta..." class="ac-textarea"></textarea>
+                                <textarea v-model="replyText" rows="2" :placeholder="t('audiocollab', 'Write a reply...')" class="ac-textarea"></textarea>
                                 <div class="ac-composer-row">
-                                    <button class="ac-btn ac-btn-ghost ac-btn-sm" @click="cancelReply">Annulla</button>
-                                    <button class="ac-btn ac-btn-primary ac-btn-sm" @click="submitReply(comment)">Rispondi</button>
+                                    <button class="ac-btn ac-btn-ghost ac-btn-sm" @click="cancelReply">{{ t('audiocollab', 'Cancel') }}</button>
+                                    <button class="ac-btn ac-btn-primary ac-btn-sm" @click="submitReply(comment)">{{ t('audiocollab', 'Reply') }}</button>
                                 </div>
                             </div>
 
@@ -342,19 +342,19 @@
                                         <template v-if="editingCommentId === reply.id">
                                             <textarea v-model="editText" rows="2" class="ac-textarea"></textarea>
                                             <div class="ac-composer-row">
-                                                <button class="ac-btn ac-btn-ghost ac-btn-sm" @click="cancelEdit">Annulla</button>
-                                                <button class="ac-btn ac-btn-primary ac-btn-sm" @click="saveEdit(reply)">Salva</button>
+                                                <button class="ac-btn ac-btn-ghost ac-btn-sm" @click="cancelEdit">{{ t('audiocollab', 'Cancel') }}</button>
+                                                <button class="ac-btn ac-btn-primary ac-btn-sm" @click="saveEdit(reply)">{{ t('audiocollab', 'Save') }}</button>
                                             </div>
                                         </template>
                                         <p v-else class="ac-comment-text">{{ reply.body }}</p>
                                         <div class="ac-comment-actions" v-if="editingCommentId !== reply.id">
-                                            <button v-if="isMine(reply.author_uid)" class="ac-action-link" @click="startEdit(reply)" title="Modifica">
+                                            <button v-if="isMine(reply.author_uid)" class="ac-action-link" @click="startEdit(reply)" :title="t('audiocollab', 'Edit')">
                                                 <svg class="ac-action-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
-                                                <span class="ac-action-label">Modifica</span>
+                                                <span class="ac-action-label">{{ t('audiocollab', 'Edit') }}</span>
                                             </button>
-                                            <button v-if="isMine(reply.author_uid)" class="ac-action-link" @click="deleteComment(reply)" title="Elimina">
+                                            <button v-if="isMine(reply.author_uid)" class="ac-action-link" @click="deleteComment(reply)" :title="t('audiocollab', 'Delete')">
                                                 <svg class="ac-action-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
-                                                <span class="ac-action-label">Elimina</span>
+                                                <span class="ac-action-label">{{ t('audiocollab', 'Delete') }}</span>
                                             </button>
                                         </div>
                                     </div>
@@ -368,12 +368,12 @@
                     <textarea
                         v-model="newCommentText"
                         rows="2"
-                        placeholder="Scrivi un commento al punto in cui ti trovi..."
+                        :placeholder="t('audiocollab', 'Write a comment at the current point...')"
                         class="ac-textarea"
                     ></textarea>
                     <div class="ac-composer-row">
-                        <span class="ac-composer-time">a {{ formatTime(currentTime) }}</span>
-                        <button class="ac-btn ac-btn-primary ac-btn-sm" @click="submitComment">Invia</button>
+                        <span class="ac-composer-time">{{ t('audiocollab', 'at {time}', { time: formatTime(currentTime) }) }}</span>
+                        <button class="ac-btn ac-btn-primary ac-btn-sm" @click="submitComment">{{ t('audiocollab', 'Send') }}</button>
                     </div>
                 </div>
             </section>
@@ -387,13 +387,13 @@
                 >
                     <span class="ac-version-pill">v{{ v.number }}</span>
                     <div class="ac-version-info">
-                        <span class="ac-version-current" v-if="v.id === version.id">In visualizzazione</span>
+                        <span class="ac-version-current" v-if="v.id === version.id">{{ t('audiocollab', 'Currently viewing') }}</span>
                         <span class="ac-version-meta">
-                            Caricata da {{ v.uploadedBy }}<span v-if="v.uploadedAt"> · {{ formatDate(v.uploadedAt) }}</span>
+                            {{ t('audiocollab', 'Uploaded by {name}', { name: v.uploadedBy }) }}<span v-if="v.uploadedAt"> · {{ formatDate(v.uploadedAt) }}</span>
                         </span>
-                        <span class="ac-version-meta" v-if="v.nativeRevisionId">rev. Nextcloud: {{ formatUnixDate(v.nativeRevisionId) }}</span>
+                        <span class="ac-version-meta" v-if="v.nativeRevisionId">{{ t('audiocollab', 'Nextcloud rev.:') }} {{ formatUnixDate(v.nativeRevisionId) }}</span>
                     </div>
-                    <button v-if="v.id !== version.id" class="ac-btn ac-btn-ghost ac-btn-sm" @click="switchVersion(v.id)">Visualizza</button>
+                    <button v-if="v.id !== version.id" class="ac-btn ac-btn-ghost ac-btn-sm" @click="switchVersion(v.id)">{{ t('audiocollab', 'View') }}</button>
                 </div>
             </section>
             </div>
@@ -404,6 +404,7 @@
 <script>
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import { translate as t, getCanonicalLocale } from '@nextcloud/l10n'
 
 const AVATAR_COLORS = ['#1f6fbf', '#8b5fd1', '#2f9e6e', '#e08a3c', '#d1435c', '#0f9aa6']
 
@@ -422,7 +423,7 @@ export default {
                 commentNotifications: true,
                 trackStatus: true,
             },
-            loadingMessage: 'Caricamento anteprima audio...',
+            loadingMessage: t('audiocollab', 'Loading audio preview...'),
             peaks: [],
             streamUrl: '',
             duration: 0,
@@ -463,7 +464,7 @@ export default {
             platformOptions: [
                 {
                     id: 'original',
-                    label: 'Originale',
+                    label: t('audiocollab', 'Original'),
                     // Non è un marchio: barre generiche stile equalizzatore,
                     // così su mobile ha un'icona coerente con le altre senza
                     // inventare un logo per qualcosa che non ne ha uno.
@@ -637,6 +638,7 @@ export default {
         document.removeEventListener('visibilitychange', this.onVisibilityChange)
     },
     methods: {
+        t,
         async fetchFeatures() {
             try {
                 const response = await axios.get(generateUrl('/apps/audiocollab/api/settings'))
@@ -646,9 +648,9 @@ export default {
             }
         },
         async loadTrackData(versionId = null) {
-            this.loadingMessage = 'Caricamento anteprima audio...'
+            this.loadingMessage = t('audiocollab', 'Loading audio preview...')
             const slowLoadTimer = setTimeout(() => {
-                this.loadingMessage = 'Generazione anteprima in corso, un momento...'
+                this.loadingMessage = t('audiocollab', 'Generating preview, just a moment...')
             }, 1500)
             try {
                 const params = { fileid: this.fileid }
@@ -677,7 +679,11 @@ export default {
             }
         },
         statusLabel(status) {
-            return { draft: 'Bozza', in_review: 'In revisione', approved: 'Approvato' }[status] || 'Bozza'
+            return {
+                draft: t('audiocollab', 'Draft'),
+                in_review: t('audiocollab', 'In review'),
+                approved: t('audiocollab', 'Approved'),
+            }[status] || t('audiocollab', 'Draft')
         },
         async changeStatus(status) {
             this.showStatusMenu = false
@@ -895,7 +901,7 @@ export default {
             }
         },
         async deleteComment(comment) {
-            if (!confirm('Eliminare questo commento?')) return
+            if (!confirm(t('audiocollab', 'Delete this comment?'))) return
             try {
                 await axios.delete(generateUrl('/apps/audiocollab/api/comment/{id}', { id: comment.id }))
                 this.comments = this.comments.filter(c => c.id !== comment.id && c.parent_id !== comment.id)
@@ -946,12 +952,12 @@ export default {
             if (!value) return ''
             const d = new Date(value.replace(' ', 'T') + 'Z')
             if (isNaN(d.getTime())) return ''
-            return d.toLocaleString('it-IT', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+            return d.toLocaleString(getCanonicalLocale(), { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
         },
         formatUnixDate(seconds) {
             const d = new Date(seconds * 1000)
             if (isNaN(d.getTime())) return ''
-            return d.toLocaleString('it-IT', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+            return d.toLocaleString(getCanonicalLocale(), { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
         },
         initials(name) {
             if (!name) return '?'
@@ -1900,7 +1906,7 @@ export default {
     gap: 4px;
     border: none;
     background: none;
-    padding: 0;
+    padding: 6px;
     font-size: 11px;
     font-weight: 600;
     color: var(--ac-text-faint);
@@ -1909,9 +1915,18 @@ export default {
     letter-spacing: 0.3px;
 }
 
+/* Solo icona (con tooltip via title): la versione testuale in maiuscolo
+   ("RISPONDI/MODIFICA/ELIMINA/RISOLTO") era più chiara ma anche più
+   ingombrante e disordinata quando i commenti hanno più azioni assieme;
+   l'icona-sola, introdotta prima solo per mobile, si è rivelata più pulita
+   anche su desktop. */
 .ac-action-icon {
-    display: none;
+    display: inline-block;
     flex-shrink: 0;
+}
+
+.ac-action-label {
+    display: none;
 }
 
 .ac-action-link:hover {
@@ -2222,21 +2237,6 @@ export default {
 
     .ac-time-badge {
         padding: 10px 0;
-    }
-
-    .ac-action-link {
-        padding: 8px;
-    }
-
-    /* Sotto i 520px "RISPONDI/MODIFICA/ELIMINA/RISOLTO" in maiuscolo
-       andavano a capo in modo disordinato: solo l'icona, con il testo
-       leggibile via title al tocco prolungato. */
-    .ac-action-icon {
-        display: inline-block;
-    }
-
-    .ac-action-label {
-        display: none;
     }
 
     .ac-toggle-switch {

@@ -9,20 +9,27 @@ use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Services\IAppConfig;
+use OCP\Comments\ICommentsManager;
 use OCP\Files\IRootFolder;
 use OCP\IGroupManager;
 use OCP\IRequest;
 use OCP\IURLGenerator;
+use OCP\IUserManager;
 use OCP\IUserSession;
 
 class DashboardController extends Controller {
 
     private const MAX_TRACKS = 10;
     private const MAX_COMMENTS = 15;
+    private const MAX_NATIVE_COMMENTS = 10;
     // Quante righe recenti considerare prima di filtrare per accesso: più
     // larga della lista finale perché alcune verranno scartate (file non
     // più accessibili all'utente corrente, es. condivisione revocata).
     private const CANDIDATE_POOL = 60;
+    // Quanti file (tra quelli con attività recente) interrogare per i
+    // commenti nativi: una query per file, quindi tenuta più stretta del
+    // pool usato per le tracce/i commenti AudioCollab.
+    private const NATIVE_COMMENTS_FILE_POOL = 15;
 
     public function __construct(
         string $appName,
@@ -31,8 +38,10 @@ class DashboardController extends Controller {
         private IUserSession $userSession,
         private IURLGenerator $urlGenerator,
         private IGroupManager $groupManager,
+        private IUserManager $userManager,
         private TrackVersionMapper $versionMapper,
         private CommentMapper $commentMapper,
+        private ICommentsManager $commentsManager,
         private IAppConfig $appConfig,
     ) {
         parent::__construct($appName, $request);
@@ -56,6 +65,7 @@ class DashboardController extends Controller {
         return new JSONResponse([
             'recentTracks' => $this->buildRecentTracks($userFolder, $features['trackStatus']),
             'recentComments' => $this->buildRecentComments($userFolder),
+            'nativeComments' => $this->buildRecentFileComments($userFolder),
             'stats' => $this->buildStats($features['trackStatus']),
             'isAdmin' => $this->groupManager->isAdmin($user->getUID()),
             'features' => $features,
@@ -136,6 +146,7 @@ class DashboardController extends Controller {
                 'fileId' => $fileId,
                 'commentId' => $comment->getId(),
                 'trackName' => $this->resolveTrackName($version, $node->getName()),
+                'versionNumber' => $version->getVersionNumber(),
                 'authorUid' => $comment->getAuthorUid(),
                 'excerpt' => mb_substr($comment->getBody(), 0, 140),
                 'timestampSeconds' => $comment->getTimestampSeconds(),
@@ -149,6 +160,61 @@ class DashboardController extends Controller {
         }
 
         return $comments;
+    }
+
+    /**
+     * I commenti "classici" di Nextcloud (tab Commenti nativa, indipendente
+     * da AudioCollab) sulle tracce con attività recente: pensati per chi usa
+     * ancora il commento generico sul file invece del commento a timestamp
+     * di AudioCollab, o per note che non riguardano un punto preciso audio.
+     */
+    private function buildRecentFileComments($userFolder): array {
+        $candidates = $this->versionMapper->findRecentVersions(self::CANDIDATE_POOL);
+
+        $seenFileIds = [];
+        $fileIds = [];
+        foreach ($candidates as $version) {
+            $fileId = $version->getFileId();
+            if (isset($seenFileIds[$fileId])) {
+                continue;
+            }
+            $seenFileIds[$fileId] = true;
+            $fileIds[] = $fileId;
+            if (count($fileIds) >= self::NATIVE_COMMENTS_FILE_POOL) {
+                break;
+            }
+        }
+
+        $comments = [];
+        foreach ($fileIds as $fileId) {
+            $nodes = $userFolder->getById($fileId);
+            if (empty($nodes)) {
+                // File non (più) accessibile a questo utente: salta.
+                continue;
+            }
+            $node = $nodes[0];
+
+            foreach ($this->commentsManager->getForObject('files', (string)$fileId, self::MAX_NATIVE_COMMENTS) as $comment) {
+                $authorId = $comment->getActorId();
+                $authorName = $comment->getActorType() === 'users'
+                    ? ($this->userManager->getDisplayName($authorId) ?? $authorId)
+                    : $authorId;
+
+                $comments[] = [
+                    'fileId' => $fileId,
+                    'commentId' => (int)$comment->getId(),
+                    'fileName' => $node->getName(),
+                    'authorUid' => $authorName,
+                    'excerpt' => mb_substr($comment->getMessage(), 0, 140),
+                    'createdAt' => $comment->getCreationDateTime()->format('Y-m-d H:i:s'),
+                    'link' => $this->buildFileLink($fileId),
+                ];
+            }
+        }
+
+        usort($comments, fn($a, $b) => strcmp($b['createdAt'], $a['createdAt']));
+
+        return array_slice($comments, 0, self::MAX_NATIVE_COMMENTS);
     }
 
     /**
