@@ -1,65 +1,67 @@
+*[Leggi questo in italiano](README.it.md)*
+
 # AudioCollab
 
-App per Nextcloud per la revisione collaborativa di mix audio in studio: player con waveform, commenti a timestamp, versioning automatico, confronto e bilanciamento del volume tra le tracce di un progetto, simulazione dell'ascolto su Spotify/Apple Music/YouTube Music, stato di revisione per traccia e notifiche per i nuovi commenti.
+Nextcloud app for collaborative studio mix review: a player with waveform and timestamped comments, automatic versioning, loudness comparison and matching between the tracks of a project, listening simulation on Spotify/Apple Music/YouTube Music, per-track review status, and notifications for new comments.
 
-## Funzionalità
+## Features
 
-- **Player con waveform e commenti a timestamp**, con risposte, modifica ed eliminazione.
-- **Versioning automatico**, sincronizzato con la cronologia file nativa di Nextcloud: ogni sovrascrittura di una traccia genera una nuova versione tracciata, senza duplicare lavoro.
-- **Confronto e bilanciamento del volume (loudness matching)** tra le tracce di uno stesso progetto (cartella), sia nel player singolo sia nella vista di confronto dedicata.
-- **Simulazione dell'ascolto** su Spotify / Apple Music / YouTube Music, basata sui target LUFS reali di ciascuna piattaforma.
-- **Stato di revisione per traccia** (bozza / in revisione / approvato), gestibile da proprietario e collaboratori con permesso di scrittura.
-- **Notifiche native Nextcloud** per nuovi commenti e risposte, con link diretto al punto esatto del commento nel player.
-- **Dashboard** con tracce e commenti recenti, statistiche rapide e accesso alle impostazioni per gli amministratori.
-- **Pannello di amministrazione** per abilitare/disabilitare singolarmente loudness matching, notifiche commenti e stato di revisione.
+- **Player with waveform and timestamped comments**, with replies, editing and deletion.
+- **Automatic versioning**, synced with Nextcloud's native file history: every overwrite of a track creates a new tracked version, without duplicating work.
+- **Loudness comparison and matching** between the tracks of the same project (folder), both in the single-track player and in a dedicated comparison view.
+- **Listening simulation** on Spotify / Apple Music / YouTube Music, based on each platform's real LUFS targets.
+- **Per-track review status** (draft / in review / approved), manageable by the owner and by collaborators with write access.
+- **Native Nextcloud notifications** for new comments and replies, with a direct link to the exact point of the comment in the player.
+- **Dashboard** with recent tracks and comments, quick stats, and settings access for admins.
+- **Admin panel** to individually enable/disable loudness matching, comment notifications, and review status.
 
-## Requisiti
+## Requirements
 
 - Nextcloud 27–35.
-- PHP 8.1+ (8.3+ se in esecuzione su Nextcloud 35, che lo richiede come minimo).
-- **Un microservizio esterno (`audiotools`) per la transcodifica e l'analisi audio** — vedi sotto. Senza questo componente l'app si installa e si avvia, ma le funzionalità principali (anteprima audio, waveform, loudness matching, simulazione piattaforme) non funzionano.
+- PHP 8.1+ (8.3+ when running on Nextcloud 35, which requires it as a minimum).
+- **An external microservice (`audiotools`) for audio transcoding and analysis** — see below. Without this component the app installs and starts, but its core features (audio preview, waveform, loudness matching, platform simulation) don't work.
 
-## Il microservizio `audiotools`
+## The `audiotools` microservice
 
-AudioCollab delega a un piccolo servizio Node.js/ffmpeg esterno (non incluso nel pacchetto dell'app) tutto il lavoro pesante: transcodifica, estrazione waveform, analisi loudness (LUFS/LRA/True Peak) e metadati. Gira come container separato, tipicamente su Docker, e comunica con l'app via HTTP su una rete interna/locale — **non deve essere esposto pubblicamente**.
+AudioCollab delegates all the heavy lifting — transcoding, waveform extraction, loudness analysis (LUFS/LRA/True Peak) and metadata — to a small external Node.js/ffmpeg service (not bundled with the app package). It runs as a separate container, typically on Docker, and talks to the app over HTTP on an internal/local network — **it must never be exposed publicly**.
 
-### Perché un servizio separato
+### Why a separate service
 
-ffmpeg e l'elaborazione audio sono operazioni pesanti (CPU, memoria, tempo) che non è sensato eseguire dentro il processo PHP di Nextcloud. Isolarle in un container dedicato permette di scalarle o spostarle indipendentemente dal resto dell'istanza Nextcloud.
+ffmpeg and audio processing are heavy operations (CPU, memory, time) that don't belong inside Nextcloud's PHP process. Isolating them in a dedicated container lets you scale or relocate them independently of the rest of the Nextcloud instance.
 
 ### Setup
 
-Il `Dockerfile` e il `docker-compose.yml` del microservizio sono inclusi in questo repository sotto `docker/audiotools/` e usano direttamente `src/server.js` come sorgente (nessuna copia manuale da mantenere allineata).
+The microservice's `Dockerfile` and `docker-compose.yml` are included in this repository under `docker/audiotools/`, and build directly from `src/server.js` (no manual copy to keep in sync).
 
-1. Build e avvio, dalla **radice del repository** (il contesto di build deve includere `src/`):
+1. Build and start, from the **repository root** (the build context needs to include `src/`):
    ```bash
    docker compose -f docker/audiotools/docker-compose.yml up -d --build
    ```
-   oppure, senza compose:
+   or, without compose:
    ```bash
    docker build -f docker/audiotools/Dockerfile -t audiotools .
    docker run -d --name audiotools --restart unless-stopped -p 127.0.0.1:3100:3100 audiotools
    ```
-   La porta va esposta solo su `127.0.0.1` (o su una rete interna raggiungibile dal server Nextcloud), mai pubblicamente: il servizio non fa autenticazione.
-2. Verifica che risponda:
+   The port should only be exposed on `127.0.0.1` (or an internal network reachable by the Nextcloud server), never publicly: the service has no authentication.
+2. Check that it responds:
    ```bash
    curl http://localhost:3100/health
    ```
-3. In **Impostazioni → Amministrazione → AudioCollab** (o via `occ config:app:set`), configura se necessario:
-   - `ffmpeg_service_url` — URL del servizio (default `http://localhost:3100`, va cambiato se il container gira su un altro host/porta).
-   - `cache_base_path` — percorso su disco dove AudioCollab tiene la cache di mp3/waveform generati. Facoltativo: se non impostato, di default viene creato automaticamente sotto la data directory di Nextcloud (`<datadirectory>/appdata_<instanceid>/audiocollab_cache`), quindi funziona senza configurazione su qualunque installazione. Impostalo solo se vuoi la cache su un disco/volume diverso da quello dei dati di Nextcloud.
+3. In **Settings → Administration → AudioCollab** (or via `occ config:app:set`), configure if needed:
+   - `ffmpeg_service_url` — the service's URL (default `http://localhost:3100`, change it if the container runs on a different host/port).
+   - `cache_base_path` — the disk path where AudioCollab keeps its generated mp3/waveform cache. Optional: if unset, it defaults to a path under Nextcloud's own data directory (`<datadirectory>/appdata_<instanceid>/audiocollab_cache`), so it works with no configuration on any installation. Only set this if you want the cache on a different disk/volume than Nextcloud's own data.
 
    ```bash
-   occ config:app:set audiocollab ffmpeg_service_url --value=http://host:porta
-   occ config:app:set audiocollab cache_base_path --value=/percorso/cache
+   occ config:app:set audiocollab ffmpeg_service_url --value=http://host:port
+   occ config:app:set audiocollab cache_base_path --value=/path/to/cache
    ```
 
-### Endpoint esposti dal servizio
+### Endpoints exposed by the service
 
-- `POST /analyze-all` — endpoint principale: un solo upload del file, il container fa transcodifica (se serve), estrazione waveform, analisi loudness e metadati in un'unica chiamata.
-- `POST /metadata` — estrazione rapida di artista/titolo (usato come fallback per versioni create prima dell'introduzione della cache metadati).
-- `GET /health` — controllo di stato.
+- `POST /analyze-all` — main endpoint: a single file upload, and the container runs transcoding (if needed), waveform extraction, loudness analysis and metadata extraction in one call.
+- `POST /metadata` — quick artist/title extraction (used as a fallback for versions created before the metadata cache was introduced).
+- `GET /health` — health check.
 
-## Licenza
+## License
 
-AGPL-3.0-or-later, coerente con Nextcloud stesso.
+AGPL-3.0-or-later, consistent with Nextcloud itself.

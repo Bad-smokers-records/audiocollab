@@ -3,8 +3,10 @@
       xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
     <id>audiocollab</id>
     <name>AudioCollab</name>
-    <summary>Revisione collaborativa di mix audio in studio</summary>
-    <description><![CDATA[Piattaforma per la revisione collaborativa di mix audio: player con waveform e commenti a timestamp (con risposte, modifica ed eliminazione), versioning automatico sincronizzato con la cronologia file di Nextcloud, confronto e bilanciamento del volume (loudness matching) tra le tracce di un progetto, simulazione dell'ascolto su Spotify/Apple Music/YouTube Music, stato di revisione per traccia (bozza/in revisione/approvato) e notifiche per i nuovi commenti.]]></description>
+    <summary>Collaborative studio mix review</summary>
+    <summary lang="it">Revisione collaborativa di mix audio in studio</summary>
+    <description><![CDATA[A platform for collaborative audio mix review: a player with waveform and timestamped comments (with replies, editing and deletion), automatic versioning synced with Nextcloud's file history, loudness comparison and matching between the tracks of a project, listening simulation on Spotify/Apple Music/YouTube Music, per-track review status (draft/in review/approved), and notifications for new comments.]]></description>
+    <description lang="it"><![CDATA[Piattaforma per la revisione collaborativa di mix audio: player con waveform e commenti a timestamp (con risposte, modifica ed eliminazione), versioning automatico sincronizzato con la cronologia file di Nextcloud, confronto e bilanciamento del volume (loudness matching) tra le tracce di un progetto, simulazione dell'ascolto su Spotify/Apple Music/YouTube Music, stato di revisione per traccia (bozza/in revisione/approvato) e notifiche per i nuovi commenti.]]></description>
     <version>1.0.11</version>
     <licence>agpl</licence>
     <author mail="fede.biondo@gmail.com">Bad Smokers Records</author>
