@@ -5,7 +5,7 @@
     <name>AudioCollab</name>
     <summary>Revisione collaborativa di mix audio in studio</summary>
     <description><![CDATA[Piattaforma per la revisione collaborativa di mix audio: player con waveform e commenti a timestamp (con risposte, modifica ed eliminazione), versioning automatico sincronizzato con la cronologia file di Nextcloud, confronto e bilanciamento del volume (loudness matching) tra le tracce di un progetto, simulazione dell'ascolto su Spotify/Apple Music/YouTube Music, stato di revisione per traccia (bozza/in revisione/approvato) e notifiche per i nuovi commenti.]]></description>
-    <version>1.0.7</version>
+    <version>1.0.8</version>
     <licence>agpl</licence>
     <author mail="fede.biondo@gmail.com">Bad Smokers Records</author>
     <category>multimedia</category>

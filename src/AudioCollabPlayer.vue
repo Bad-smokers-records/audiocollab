@@ -600,6 +600,12 @@ export default {
     },
     async mounted() {
         document.body.classList.add('audiocollab-viewer-active')
+        // Su iOS Safari lo schermo che si blocca (o l'app che va in
+        // background) sospende l'AudioContext della Web Audio API: la
+        // riproduzione si interrompe senza un vero evento 'pause', quindi
+        // senza questo listener il player resta silenzioso allo sblocco
+        // finché l'utente non tocca play due volte.
+        document.addEventListener('visibilitychange', this.onVisibilityChange)
         // Abbiamo una nostra UI di caricamento interna: diciamo subito al
         // Viewer nativo di nascondere la propria rotellina, altrimenti resta
         // visibile sovrapposta alla nostra finché l'audio non è pronto.
@@ -628,6 +634,7 @@ export default {
     },
     beforeDestroy() {
         document.body.classList.remove('audiocollab-viewer-active')
+        document.removeEventListener('visibilitychange', this.onVisibilityChange)
     },
     methods: {
         async fetchFeatures() {
@@ -729,10 +736,22 @@ export default {
         },
         togglePlay() {
             this.ensureAudioGraph()
-            if (this.isPlaying) {
-                this.$refs.audioEl.pause()
+            // Usa lo stato reale dell'elemento <audio> (.paused) invece del
+            // flag isPlaying: su iOS, quando lo schermo si blocca, l'
+            // AudioContext della Web Audio API può sospendersi senza che
+            // l'elemento audio emetta un evento 'pause', lasciando isPlaying
+            // disallineato dalla realtà e il tasto play/pausa "bloccato"
+            // (serve un doppio tocco per ripartire).
+            const el = this.$refs.audioEl
+            if (el.paused) {
+                el.play()
             } else {
-                this.$refs.audioEl.play()
+                el.pause()
+            }
+        },
+        onVisibilityChange() {
+            if (document.visibilityState === 'visible' && this.audioContext && this.audioContext.state === 'suspended') {
+                this.audioContext.resume()
             }
         },
         ensureAudioGraph() {
